@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "animation.KHR_animation_type.schema.json",
+    "title": "KHR_animation_type glTF Animation Extension",
+    "type": "object",
+    "description": "glTF extension that declares the blend semantics of an animation.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "type": {
+            "description": "The blend semantics of this animation.",
+            "anyOf": [
+                {
+                    "const": "override",
+                    "description": "Animation values fully replace the base pose. Standard glTF behavior."
+                },
+                {
+                    "const": "additive",
+                    "description": "Animation values represent deltas applied on top of the base pose."
+                },
+                {
+                    "type": "string",
+                    "description": "Custom blend type for extensibility."
+                }
+            ],
+            "default": "override"
+        },
+        "extensions": { },
+        "extras": { }
+    }
+}

@@ -1,0 +1,72 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.event_onSyncMarker.schema.json",
+    "title": "event/onSyncMarker Node",
+    "type": "object",
+    "description": "Fires when a sync marker is reached (KHR_animation_events with isSync: true). Syntactic sugar for event/onAnimationEvent filtered to isSync events. Requires KHR_animation_events extension.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "event/onSyncMarker",
+            "description": "Node type identifier."
+        },
+        "configuration": {
+            "type": "object",
+            "description": "Static configuration values set at graph load time.",
+            "properties": {
+                "animation": {
+                    "type": "object",
+                    "description": "glTF animation index to monitor.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["animation"]
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Event nodes have no input flows.",
+            "maxItems": 0
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "out" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "name": {
+                    "type": "object",
+                    "description": "Sync marker name.",
+                    "properties": {
+                        "type": { "const": "string" }
+                    },
+                    "required": ["type"]
+                },
+                "phase": {
+                    "type": "object",
+                    "description": "Normalized [0,1] position in animation.",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["name", "phase"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "configuration", "outputFlows", "outputValues"]
+}

@@ -1,0 +1,127 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.animation_crossfade.schema.json",
+    "title": "animation/crossfade Node",
+    "type": "object",
+    "description": "Blends from one animation to another over time. Uses animation indices (not playbackIds) for stability. Duration is in wall-clock seconds.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "animation/crossfade",
+            "description": "Node type identifier."
+        },
+        "configuration": {
+            "type": "object",
+            "description": "Static configuration values set at graph load time.",
+            "properties": {
+                "fromAnimation": {
+                    "type": "object",
+                    "description": "glTF animation index to fade FROM.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                },
+                "toAnimation": {
+                    "type": "object",
+                    "description": "glTF animation index to fade TO.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["fromAnimation", "toAnimation"]
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Input flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "in" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "anyOf": [
+                            { "const": "out" },
+                            { "const": "done" },
+                            { "const": "err" }
+                        ]
+                    }
+                }
+            },
+            "minItems": 3,
+            "maxItems": 3
+        },
+        "inputValues": {
+            "type": "object",
+            "description": "Input value sockets.",
+            "properties": {
+                "duration": {
+                    "type": "object",
+                    "description": "Crossfade duration in WALL-CLOCK seconds.",
+                    "properties": {
+                        "type": { "const": "float" },
+                        "default": { "type": "number", "default": 0.3 }
+                    },
+                    "required": ["type"]
+                },
+                "toStartTime": {
+                    "type": "object",
+                    "description": "Start time for target animation.",
+                    "properties": {
+                        "type": { "const": "float" },
+                        "default": { "type": "number", "default": 0.0 }
+                    },
+                    "required": ["type"]
+                },
+                "toSpeed": {
+                    "type": "object",
+                    "description": "Speed for target animation.",
+                    "properties": {
+                        "type": { "const": "float" },
+                        "default": { "type": "number", "default": 1.0 }
+                    },
+                    "required": ["type"]
+                },
+                "toLoop": {
+                    "type": "object",
+                    "description": "Whether target animation loops.",
+                    "properties": {
+                        "type": { "const": "bool" },
+                        "default": { "type": "boolean", "default": false }
+                    },
+                    "required": ["type"]
+                }
+            }
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "playbackId": {
+                    "type": "object",
+                    "description": "Handle for the TO animation.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["playbackId"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "configuration", "inputFlows", "outputFlows", "outputValues"]
+}

@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "KHR_animation_layers glTF Document Extension",
+    "type": "object",
+    "description": "glTF extension that defines an ordered animation layer stack with masks.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "masks": {
+            "type": "array",
+            "description": "Array of mask definitions. Referenced by index from layers.",
+            "items": {
+                "$ref": "KHR_animation_layers.mask.schema.json"
+            },
+            "minItems": 1,
+            "maxItems": 256
+        },
+        "layers": {
+            "type": "array",
+            "description": "Ordered array of layer objects. Index 0 is base layer, higher indices have higher priority.",
+            "items": {
+                "$ref": "KHR_animation_layers.layer.schema.json"
+            },
+            "minItems": 1,
+            "maxItems": 32
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "layers" ]
+}

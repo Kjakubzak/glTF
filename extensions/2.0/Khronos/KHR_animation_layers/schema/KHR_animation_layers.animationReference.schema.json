@@ -1,0 +1,41 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_animation_layers.animationReference.schema.json",
+    "title": "KHR_animation_layers Animation Reference",
+    "type": "object",
+    "description": "A reference to an animation within a layer.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "animation": {
+            "allOf": [ { "$ref": "glTFid.schema.json" } ],
+            "description": "Index into glTF animations array."
+        },
+        "weight": {
+            "type": "number",
+            "description": "Animation weight within this layer. Must not be NaN or Infinity.",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 1.0
+        },
+        "typeOverride": {
+            "description": "Override the animation's intrinsic blend type. If omitted, uses the animation's KHR_animation_type.type or defaults to 'override'.",
+            "anyOf": [
+                {
+                    "const": "override",
+                    "description": "Animation values fully replace the base pose."
+                },
+                {
+                    "const": "additive",
+                    "description": "Animation values represent deltas applied on top of the base pose."
+                },
+                {
+                    "type": "string",
+                    "description": "Custom blend type for extensibility."
+                }
+            ]
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "animation" ]
+}

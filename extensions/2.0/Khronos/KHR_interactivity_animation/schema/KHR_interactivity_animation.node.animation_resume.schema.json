@@ -1,0 +1,61 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.animation_resume.schema.json",
+    "title": "animation/resume Node",
+    "type": "object",
+    "description": "Resumes a paused animation from its current time.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "animation/resume",
+            "description": "Node type identifier."
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Input flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "in" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "anyOf": [
+                            { "const": "out" },
+                            { "const": "err" }
+                        ]
+                    }
+                }
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "inputValues": {
+            "type": "object",
+            "description": "Input value sockets.",
+            "properties": {
+                "playbackId": {
+                    "type": "object",
+                    "description": "Handle from animation/start.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["playbackId"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "inputFlows", "outputFlows", "inputValues"]
+}

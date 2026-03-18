@@ -1,0 +1,72 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.event_onAnimationComplete.schema.json",
+    "title": "event/onAnimationComplete Node",
+    "type": "object",
+    "description": "Fires when an animation reaches its end (non-looping) or completes a loop iteration. Fires AFTER final frame evaluation, BEFORE loop resets time.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "event/onAnimationComplete",
+            "description": "Node type identifier."
+        },
+        "configuration": {
+            "type": "object",
+            "description": "Static configuration values set at graph load time.",
+            "properties": {
+                "animation": {
+                    "type": "object",
+                    "description": "glTF animation index to monitor.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["animation"]
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Event nodes have no input flows.",
+            "maxItems": 0
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "out" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "playbackId": {
+                    "type": "object",
+                    "description": "Handle of the completed animation.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                },
+                "loopCount": {
+                    "type": "object",
+                    "description": "Number of completed loops (0 for non-looping).",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["playbackId", "loopCount"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "configuration", "outputFlows", "outputValues"]
+}

@@ -1,0 +1,97 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.event_onAnimationEvent.schema.json",
+    "title": "event/onAnimationEvent Node",
+    "type": "object",
+    "description": "Fires when a KHR_animation_events event is triggered. Requires KHR_animation_events extension.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "event/onAnimationEvent",
+            "description": "Node type identifier."
+        },
+        "configuration": {
+            "type": "object",
+            "description": "Static configuration values set at graph load time.",
+            "properties": {
+                "animation": {
+                    "type": "object",
+                    "description": "glTF animation index to monitor.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                },
+                "eventName": {
+                    "type": "object",
+                    "description": "Filter by event name, or empty for all events.",
+                    "properties": {
+                        "type": { "const": "string" },
+                        "default": { "type": "string", "default": "" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["animation"]
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Event nodes have no input flows.",
+            "maxItems": 0
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "out" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "name": {
+                    "type": "object",
+                    "description": "Event name.",
+                    "properties": {
+                        "type": { "const": "string" }
+                    },
+                    "required": ["type"]
+                },
+                "time": {
+                    "type": "object",
+                    "description": "Animation local time.",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                },
+                "globalTime": {
+                    "type": "object",
+                    "description": "Scene time (accounts for start offset, speed).",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                },
+                "payload": {
+                    "type": "object",
+                    "description": "Event payload data.",
+                    "properties": {
+                        "type": { "const": "any" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["name", "time", "globalTime", "payload"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "configuration", "outputFlows", "outputValues"]
+}

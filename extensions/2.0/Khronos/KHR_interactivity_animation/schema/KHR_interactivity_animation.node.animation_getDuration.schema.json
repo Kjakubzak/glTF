@@ -1,0 +1,71 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.animation_getDuration.schema.json",
+    "title": "animation/getDuration Node",
+    "type": "object",
+    "description": "Gets the duration of an animation in seconds.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "animation/getDuration",
+            "description": "Node type identifier."
+        },
+        "configuration": {
+            "type": "object",
+            "description": "Static configuration values set at graph load time.",
+            "properties": {
+                "animation": {
+                    "type": "object",
+                    "description": "glTF animation index.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["animation"]
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Input flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "in" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "out" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "duration": {
+                    "type": "object",
+                    "description": "Duration in seconds.",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["duration"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "configuration", "inputFlows", "outputFlows", "outputValues"]
+}

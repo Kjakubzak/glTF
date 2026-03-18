@@ -1,0 +1,44 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_animation_layers.mask.schema.json",
+    "title": "KHR_animation_layers Mask",
+    "type": "object",
+    "description": "A skeletal mask that restricts which nodes a layer affects.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Human-readable mask name.",
+            "minLength": 1
+        },
+        "nodes": {
+            "type": "array",
+            "description": "Array of node indices affected by this mask. Each index must be unique.",
+            "items": {
+                "allOf": [ { "$ref": "glTFid.schema.json" } ]
+            },
+            "minItems": 1,
+            "maxItems": 65536,
+            "uniqueItems": true
+        },
+        "weights": {
+            "type": "array",
+            "description": "Parallel array of weights [0,1] for each node. MUST have same length as nodes. Must not contain NaN or Infinity.",
+            "items": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+            },
+            "minItems": 1,
+            "maxItems": 65536
+        },
+        "includeDescendants": {
+            "type": "boolean",
+            "description": "If true, mask affects descendants of specified nodes. Descendants inherit the weight of their nearest listed ancestor unless explicitly listed with a different weight.",
+            "default": true
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "nodes", "weights" ]
+}

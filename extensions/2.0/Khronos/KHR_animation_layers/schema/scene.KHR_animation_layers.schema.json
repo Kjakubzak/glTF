@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "scene.KHR_animation_layers.schema.json",
+    "title": "KHR_animation_layers glTF Scene Extension",
+    "type": "object",
+    "description": "glTF extension that defines an ordered stack of animation layers for compositing multiple animations with blending, masking, and prioritization.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "layers": {
+            "type": "array",
+            "description": "Ordered array of animation layers. Index 0 is the base layer; higher indices have higher priority and overlay lower layers.",
+            "items": {
+                "$ref": "KHR_animation_layers.layer.schema.json"
+            },
+            "minItems": 1,
+            "maxItems": 32
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "layers" ]
+}

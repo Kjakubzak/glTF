@@ -1,0 +1,79 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.animation_isPlaying.schema.json",
+    "title": "animation/isPlaying Node",
+    "type": "object",
+    "description": "Queries whether an animation instance is currently playing.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "animation/isPlaying",
+            "description": "Node type identifier."
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Input flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "in" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "out" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "inputValues": {
+            "type": "object",
+            "description": "Input value sockets.",
+            "properties": {
+                "playbackId": {
+                    "type": "object",
+                    "description": "Handle from animation/start.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["playbackId"]
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "playing": {
+                    "type": "object",
+                    "description": "True if animation is playing (not stopped).",
+                    "properties": {
+                        "type": { "const": "bool" }
+                    },
+                    "required": ["type"]
+                },
+                "paused": {
+                    "type": "object",
+                    "description": "True if animation is paused.",
+                    "properties": {
+                        "type": { "const": "bool" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["playing", "paused"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "inputFlows", "outputFlows", "inputValues", "outputValues"]
+}

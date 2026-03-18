@@ -1,0 +1,84 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.animation_getTime.schema.json",
+    "title": "animation/getTime Node",
+    "type": "object",
+    "description": "Gets the current playback time of an animation instance.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "animation/getTime",
+            "description": "Node type identifier."
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Input flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "in" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "anyOf": [
+                            { "const": "out" },
+                            { "const": "err" }
+                        ]
+                    }
+                }
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "inputValues": {
+            "type": "object",
+            "description": "Input value sockets.",
+            "properties": {
+                "playbackId": {
+                    "type": "object",
+                    "description": "Handle from animation/start.",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["playbackId"]
+        },
+        "outputValues": {
+            "type": "object",
+            "description": "Output value sockets.",
+            "properties": {
+                "time": {
+                    "type": "object",
+                    "description": "Current time in seconds.",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                },
+                "normalizedTime": {
+                    "type": "object",
+                    "description": "Current time as [0,1] phase.",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["time", "normalizedTime"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "inputFlows", "outputFlows", "inputValues", "outputValues"]
+}

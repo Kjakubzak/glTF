@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_animation_events.event.schema.json",
+    "title": "KHR_animation_events Event",
+    "type": "object",
+    "description": "A timestamped event attached to an animation.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "time": {
+            "type": "number",
+            "description": "Time in seconds when the event fires. Must not be NaN or Infinity.",
+            "minimum": 0
+        },
+        "name": {
+            "type": "string",
+            "description": "Identifier for this event. Used by applications to determine response.",
+            "minLength": 1,
+            "maxLength": 256
+        },
+        "payload": {
+            "type": "object",
+            "description": "Application-specific JSON data attached to this event. Schema is application-defined."
+        },
+        "isSync": {
+            "type": "boolean",
+            "description": "If true, this event is a sync marker for animation alignment.",
+            "default": false
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "time", "name" ]
+}

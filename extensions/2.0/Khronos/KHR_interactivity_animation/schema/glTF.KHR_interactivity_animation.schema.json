@@ -1,0 +1,12 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "glTF.KHR_interactivity_animation.schema.json",
+    "title": "KHR_interactivity_animation glTF Extension",
+    "type": "object",
+    "description": "Defines animation control nodes as a companion extension to KHR_interactivity.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "extensions": {},
+        "extras": {}
+    }
+}

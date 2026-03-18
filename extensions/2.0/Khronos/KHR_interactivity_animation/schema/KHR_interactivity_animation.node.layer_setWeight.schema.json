@@ -1,0 +1,76 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_interactivity_animation.node.layer_setWeight.schema.json",
+    "title": "layer/setWeight Node",
+    "type": "object",
+    "description": "Sets the blend weight of an animation layer. Requires KHR_animation_layers extension.",
+    "allOf": [{ "$ref": "glTFProperty.schema.json" }],
+    "properties": {
+        "type": {
+            "const": "layer/setWeight",
+            "description": "Node type identifier."
+        },
+        "configuration": {
+            "type": "object",
+            "description": "Static configuration values set at graph load time.",
+            "properties": {
+                "layer": {
+                    "type": "object",
+                    "description": "Index into KHR_animation_layers/layers[].",
+                    "properties": {
+                        "type": { "const": "int" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["layer"]
+        },
+        "inputFlows": {
+            "type": "array",
+            "description": "Input flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "const": "in" }
+                }
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "outputFlows": {
+            "type": "array",
+            "description": "Output flow sockets.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "anyOf": [
+                            { "const": "out" },
+                            { "const": "err" }
+                        ]
+                    }
+                }
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "inputValues": {
+            "type": "object",
+            "description": "Input value sockets.",
+            "properties": {
+                "weight": {
+                    "type": "object",
+                    "description": "Blend weight [0,1].",
+                    "properties": {
+                        "type": { "const": "float" }
+                    },
+                    "required": ["type"]
+                }
+            },
+            "required": ["weight"]
+        },
+        "extensions": {},
+        "extras": {}
+    },
+    "required": ["type", "configuration", "inputFlows", "outputFlows", "inputValues"]
+}

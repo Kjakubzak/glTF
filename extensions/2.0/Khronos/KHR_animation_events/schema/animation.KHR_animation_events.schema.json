@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "animation.KHR_animation_events.schema.json",
+    "title": "KHR_animation_events glTF Animation Extension",
+    "type": "object",
+    "description": "glTF extension that defines timestamped events and sync markers for an animation.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "events": {
+            "type": "array",
+            "description": "Array of event objects attached to this animation.",
+            "items": {
+                "$ref": "KHR_animation_events.event.schema.json"
+            },
+            "minItems": 1,
+            "maxItems": 4096
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "events" ]
+}

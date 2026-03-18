@@ -1,0 +1,43 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "KHR_animation_layers.layer.schema.json",
+    "title": "KHR_animation_layers Layer",
+    "type": "object",
+    "description": "An animation layer in the layer stack.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Human-readable layer name.",
+            "minLength": 1
+        },
+        "weight": {
+            "type": "number",
+            "description": "Layer blend weight. Affects all animations in this layer. Must not be NaN or Infinity.",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 1.0
+        },
+        "mask": {
+            "allOf": [ { "$ref": "glTFid.schema.json" } ],
+            "description": "Index into root masks array. If omitted, layer affects all nodes."
+        },
+        "blendMorphTargets": {
+            "type": "boolean",
+            "description": "If false, morph target channels in this layer's animations are ignored; morph weights from lower layers pass through unchanged.",
+            "default": true
+        },
+        "animations": {
+            "type": "array",
+            "description": "Array of animation references in this layer.",
+            "items": {
+                "$ref": "KHR_animation_layers.animationReference.schema.json"
+            },
+            "minItems": 1,
+            "maxItems": 1024
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": [ "animations" ]
+}
