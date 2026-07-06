@@ -14,7 +14,7 @@ Written against the glTF 2.0 specification.
 
 **Optional**: `KHR_animation_type` (for intrinsic animation blend types)
 
-**Optional**: `KHR_character_expression_mask` (for expression pre-pass integration)
+**Optional**: `KHR_animation_mask` (relational blend/block masks between animations)
 
 **Optional**: `KHR_animation_events` (for sync markers and event integration)
 
@@ -406,14 +406,9 @@ Events fire based on animation playback independent of layer weights and masks:
 - Events fire even when animation is fully masked
 - Applications needing weight-dependent events should implement custom logic
 
-### KHR_character_expression_mask
+### KHR_animation_mask
 
-Expression masks operate at a different semantic level than skeletal masks:
-
-- **Expression masks**: Control blending between facial expressions (pre-pass)
-- **Skeletal masks**: Control which joints a layer affects (layer evaluation)
-
-Both can be used together in the same asset.
+`KHR_animation_mask` masks are **relational** (one animation attenuating another's weight), distinct from the **spatial** skeletal masks defined by this extension (per-joint weights controlling which nodes a layer affects). A consuming implementation resolves `KHR_animation_mask` influences into each animation's effective weight as a pre-pass, then composites layers as usual. Both may be used together.
 
 ### KHR_animation_pointer
 

@@ -1,0 +1,40 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Animation Mask",
+    "type": "object",
+    "description": "Defines how the parent animation attenuates a target animation's weight.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "target": {
+            "type": "integer",
+            "description": "The index of the target animation whose weight this mask attenuates.",
+            "minimum": 0
+        },
+        "type": {
+            "description": "The type of the mask. 'blend' reduces the target proportionally to this animation's weight. 'block' fully reduces the target by the amount when this animation's weight exceeds the threshold.",
+            "anyOf": [
+                { "const": "blend" },
+                { "const": "block" },
+                { "type": "string" }
+            ],
+            "default": "blend"
+        },
+        "amount": {
+            "type": "number",
+            "description": "The amount of influence this mask has on the target animation. A value of 1.0 means full influence.",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 1.0
+        },
+        "threshold": {
+            "type": "number",
+            "description": "For 'block' type masks, the weight above which the target animation is blocked. When this animation's weight exceeds the threshold, the target is reduced by the amount.",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.0
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": ["target"]
+}

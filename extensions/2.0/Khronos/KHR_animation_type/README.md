@@ -12,7 +12,7 @@
 
 Written against the glTF 2.0 specification.
 
-**Optional**: `KHR_character_reference_pose` (provides rest pose for additive delta computation)
+**Optional**: `KHR_animation_reference_pose` (provides rest pose for additive delta computation)
 
 ## Overview
 
@@ -65,7 +65,7 @@ This extension is applied to individual animations in the glTF file.
 
 ## Additive Animation Mathematics
 
-Additive animations require a **reference pose** to compute deltas. The recommended reference is provided by `KHR_character_reference_pose`. If no reference pose is defined, implementations SHOULD evaluate all channels at `t=0` of the additive animation and use those values as the per-channel reference.
+Additive animations require a **reference pose** to compute deltas. The recommended reference is provided by `KHR_animation_reference_pose`. If no reference pose is defined, implementations SHOULD evaluate all channels at `t=0` of the additive animation and use those values as the per-channel reference.
 
 ### Delta Computation
 
@@ -205,7 +205,7 @@ A conforming implementation of this extension:
 
 ## Implementation Notes
 
-- **Reference Pose**: For best results, use `KHR_character_reference_pose` to define a canonical rest pose. This ensures consistent delta computation across implementations.
+- **Reference Pose**: For best results, use `KHR_animation_reference_pose` to define a canonical rest pose. This ensures consistent delta computation across implementations.
 - **Performance**: Implementations may precompute deltas from the reference pose during asset loading.
 - **Validation**: Reject animations with NaN or Infinity values in keyframe data.
 

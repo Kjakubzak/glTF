@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "KHR_animation_reference_pose glTF Animation Extension",
+    "type": "object",
+    "description": "glTF extension that marks an animation as a canonical reference (rest) pose, usable as the baseline for additive animations and for retargeting.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "poseType": {
+            "description": "The semantic classification of this reference pose. Open-ended; 'rest' is the neutral default. 'TPose'/'APose'/'IPose' are common humanoid conventions but are not required.",
+            "anyOf": [
+                { "const": "rest" },
+                { "const": "bind" },
+                { "const": "TPose" },
+                { "const": "APose" },
+                { "const": "IPose" },
+                { "type": "string" }
+            ],
+            "default": "rest"
+        },
+        "extensions": { },
+        "extras": { }
+    }
+}

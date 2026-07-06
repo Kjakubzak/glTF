@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "KHR_animation_mask glTF Animation Extension",
+    "type": "object",
+    "description": "glTF extension that defines how an animation masks (attenuates) the weight of other animations.",
+    "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+    "properties": {
+        "masks": {
+            "type": "array",
+            "description": "An array of mask objects that define how this animation attenuates the weight of other animations.",
+            "items": {
+                "$ref": "KHR_animation_mask.mask.schema.json"
+            },
+            "minItems": 1
+        },
+        "extensions": { },
+        "extras": { }
+    },
+    "required": ["masks"]
+}
