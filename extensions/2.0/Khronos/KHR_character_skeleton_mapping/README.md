@@ -16,44 +16,67 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
-Requires the extension(s):  `KHR_character`
+
+Requires the extension: `KHR_character`.
 
 Assets using `KHR_character_skeleton_mapping` MUST list `KHR_character_skeleton_mapping` and `KHR_character` in `extensionsUsed`. They MUST contain top-level `KHR_character_skeleton_mapping` and `KHR_character` extension objects.
 
-## Overview
+## Overview (Informative)
 
-The `KHR_character_skeleton_mapping` extension provides a mechanism to map a skeleton rig to a reference rig, enabling retargeting and compatibility across different skeleton topologies. This extension is particularly useful for normalizing diverse rig structures across platforms and authoring tools. It provides one-to-one mapping for maximum simplicity and compatibility.
+The `KHR_character_skeleton_mapping` extension associates roles from one or more externally defined skeletal vocabularies with nodes in a glTF asset. A mapping can help tools discover which node an author associates with a role such as `hips`, `head`, or `leftHand`.
 
-## Mapping to Known Standard Rigs
+The extension stores associations only. It does not define a skeleton topology, require a skin, identify skin joints, define inverse kinematics (IK), or provide an animation-retargeting algorithm.
 
-In many real-world scenarios, developers must remap an character's native joint structure to a **known, standardized rig**—such as a runtime's internal character model or a predefined specification like VRM's Humanoid rig.
+## Extension usage
 
-This extension supports such cases by allowing one-to-one mappings between a model's joints and those of a **target standard rig**.
+The `KHR_character_skeleton_mapping` object MUST be attached to the top-level glTF object. An asset MAY list the extension in `extensionsRequired`.
 
-These standard rigs are typically defined by the consuming platform, runtime, or service provider. Each standard rig:
+A consumer claiming support for this extension MUST recognize every mapping set, preserve the association between each vocabulary role and its referenced node while processing the asset, and resolve each `node` index. Support for this extension does not imply that the consumer understands a particular external vocabulary or can perform retargeting or IK. A consumer that cannot recognize and resolve the associations MUST treat an asset listing `KHR_character_skeleton_mapping` in `extensionsRequired` as unsupported, according to the glTF 2.0 extension rules.
 
-- Defines a fixed joint name vocabulary and hierarchy.
-- Is assumed to be known at runtime and used for animation playback, retargeting, or IK purposes.
+Requiring this extension guarantees only the generic association contract defined here. It does not require support for any particular vocabulary identified by a mapping-set URI.
 
-### Extension Schema/Example: Mapping to VRM Humanoid
+## Mapping-set and role semantics
 
-The [VRM 1.0 Humanoid specification](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/humanoid.md) defines a standardized set of joints used across VRM-compatible platforms.
+The `skeletalRigMappings` property is a nonempty object. Each property name in that object is a mapping-set identifier, and its value is a nonempty role-association object.
 
-Here's an example mapping from a custom rig into VRM Humanoid:
+Each mapping-set identifier MUST be an absolute URI that identifies a specific, version-stable skeletal vocabulary. Consumers MUST compare mapping-set identifiers using exact string equality and MUST NOT depend on URI retrieval or redirection while loading the asset. Publishers SHOULD use immutable, content-addressed, or explicitly versioned public URIs.
+
+Each property name in a role-association object MUST be a nonempty role identifier defined by the mapping set's vocabulary. Its value associates that role with one glTF node:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `node` | integer | Yes | Index of the associated node in the top-level `nodes` array. |
+| `name` | string | No | Diagnostic copy of the referenced node's `name`. When present, it MUST match that node's `name` exactly and case-sensitively. |
+
+The `node` index is authoritative. Consumers MUST NOT resolve an association by `name`. Multiple vocabulary roles MAY refer to the same node, and corresponding roles in different mapping sets MAY refer to the same node.
+
+Associated nodes are not required to appear in a `skin.joints` array. This extension does not assert skin ownership, node hierarchy, role completeness, anatomical correctness, transform compatibility, or a one-to-one correspondence between roles and distinct nodes. Requirements defined by an external vocabulary remain outside this extension.
+
+## Complete example
+
+The mapping-set identifier below is a public, commit-pinned URI for the [VRM 1.0 Humanoid vocabulary](https://github.com/vrm-c/vrm-specification/blob/70ae16e93abd6da727fdf641b67aa41010c6d933/specification/VRMC_vrm-1.0/humanoid.md). The example contains no `skin`; the associations remain valid generic role-to-node metadata.
 
 ```json
 {
   "asset": { "version": "2.0" },
+  "scene": 0,
+  "scenes": [
+    { "nodes": [0] }
+  ],
   "extensionsUsed": [
     "KHR_character",
     "KHR_character_skeleton_mapping"
   ],
   "nodes": [
     { "name": "CharacterRoot", "children": [1] },
-    { "name": "Hips", "children": [2] },
+    { "name": "Hips", "children": [2, 3, 4, 5, 6] },
     { "name": "Head" },
     { "name": "LeftFoot" },
     { "name": "RightFoot" },
@@ -66,21 +89,13 @@ Here's an example mapping from a custom rig into VRM Humanoid:
     },
     "KHR_character_skeleton_mapping": {
       "skeletalRigMappings": {
-        "vrmHumanoid": {
+        "https://github.com/vrm-c/vrm-specification/blob/70ae16e93abd6da727fdf641b67aa41010c6d933/specification/VRMC_vrm-1.0/humanoid.md": {
           "hips": { "node": 1, "name": "Hips" },
           "head": { "node": 2, "name": "Head" },
           "leftFoot": { "node": 3, "name": "LeftFoot" },
           "rightFoot": { "node": 4, "name": "RightFoot" },
           "leftHand": { "node": 5, "name": "LeftHand" },
           "rightHand": { "node": 6, "name": "RightHand" }
-        },
-        "example_rig": {
-          "hip_bone": { "node": 1, "name": "Hips" },
-          "head_bone": { "node": 2, "name": "Head" },
-          "l_foot_bone": { "node": 3, "name": "LeftFoot" },
-          "r_foot_bone": { "node": 4, "name": "RightFoot" },
-          "l_hand_bone": { "node": 5, "name": "LeftHand" },
-          "r_hand_bone": { "node": 6, "name": "RightHand" }
         }
       }
     }
@@ -88,52 +103,19 @@ Here's an example mapping from a custom rig into VRM Humanoid:
 }
 ```
 
-In this example:
+## Validation boundary
 
-- The key is the target joint name defined by the target standard rig (e.g., `"hips"` for VRM Humanoid)
-- The value is a joint association object whose required `node` is the index of the source joint's glTF node in the model's native rig — a 0-based index into the document's top-level `nodes` array (e.g., `1`)
-- The optional `name` is a human-readable label. When present, it MUST exactly match the referenced node's `name` property.
-- Because the value is a node index, two different target rigs that map to the same source joint reference the **same** node index (e.g., `vrmHumanoid.hips` and `example_rig.hip_bone` both resolve to node `1`)
-- The system using this extension may understand what `"vrmHumanoid"` or `"example_rig"` means (i.e., the joint vocabulary and structure must be pre-declared by the consuming runtime)
+The JSON Schemas enforce nonempty mapping sets, URI-scheme-prefixed mapping-set identifiers, nonempty role identifiers, association shape, and non-negative `node` indices. They also annotate mapping-set identifiers with the JSON Schema `uri` format. A validator that claims to validate this extension MUST additionally verify that every mapping-set identifier is a valid absolute URI, resolve every `node` index against the top-level `nodes` array, and verify each optional `name` against the referenced node.
 
-### Breakdown and Lower-Level Properties
+Validators are not required to retrieve a mapping-set URI, understand external role semantics, verify role completeness, identify skin joints, or run a retargeter.
 
-The structure of the data contained in the extension can be described as a dictionary of dictionaries:
+## Implementation notes (Informative)
 
-**Target Skeleton/Rig Name** : **Joint Mapping Dictionary** (Target Joint Name : Joint Association)
+- Mapping-set and role strings are identifiers, not display labels.
+- A consumer can expose associations for inspection without implementing profile-specific animation behavior.
+- Profile-specific adapters may interpret recognized roles, but their retargeting, transform, scale, and IK behavior is outside this extension.
 
-Each mapping entry is simply:
-
-| Key (Target Joint) | Value (Joint Association) | Description                                              |
-| ------------------ | ------------------------- | -------------------------------------------------------- |
-| string             | object                    | Direct mapping from a target joint name in the target vocabulary to a required source `node` index and optional matching `name` |
-
-### Mapping Types
-
-This extension supports one-to-one mappings:
-
-- **One-to-one**: A target joint maps directly to a single source joint through a joint association object containing a `node` index (an integer `glTFid`).
-
-This approach ensures maximum simplicity, compatibility across all engines and tools, and follows glTF's design philosophy of keeping core extensions simple and stable.
-
-## Mapping Registry and Target Namespaces
-
-While this extension does not mandate a central registry, developers are encouraged to:
-
-- Document the name and structure of their standard rigs
-- Reuse identifiers like `"vrmHumanoid"`, `"unityHumanoid"`, or `"metaRig"` consistently
-- Provide a public schema or joint list for validation and interoperability
-
-## Implementation Notes
-
-- Target joint names (keys) are defined by the target rig's vocabulary.
-- Each source joint association has a required `node`, a 0-based index into the glTF `nodes` array (a `glTFid`), identifying the node in the model's native rig.
-- An association `name`, when present, MUST exactly and case-sensitively match the referenced node's `name` property. Resolution is always performed using `node`.
-- The reference rig vocabulary may be shared across engines or projects.
-- This extension does not modify skinning behavior, but informs tooling and runtime animation retargeting.
-- For validation, ensure that every value is a valid, non-negative index into the top-level `nodes` array.
-
-## Known Implementations
+## Known implementations (Informative)
 
 - [0b5vr/khr-character-testbed](https://github.com/0b5vr/khr-character-testbed) - Three.js loader, retargeting helpers, and VRM conversion tooling.
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and rig-switching demo.

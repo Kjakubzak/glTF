@@ -2,15 +2,27 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "KHR_character_skeleton_mapping glTF Document Extension",
     "type": "object",
-    "description": "glTF extension that provides a mechanism to map a skeleton rig to a reference rig for retargeting and compatibility.",
+    "description": "Associates roles from versioned skeletal vocabularies with glTF nodes.",
     "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
     "properties": {
         "skeletalRigMappings": {
             "type": "object",
-            "description": "Dictionary of target rig mappings. Each key is a target rig name, each value is a mapping dictionary.",
+            "description": "Nonempty dictionary of skeletal vocabulary mappings. Each key is an absolute URI identifying a version-stable vocabulary; each value associates that vocabulary's role identifiers with glTF nodes.",
+            "minProperties": 1,
+            "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uri",
+                "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+            },
             "additionalProperties": {
                 "type": "object",
-                "description": "Joint mapping dictionary. Each key is a target joint name in the target rig vocabulary, each value is a source joint association.",
+                "description": "Nonempty role-association dictionary. Each key is a nonempty role identifier defined by the mapping set's vocabulary; each value is a node association.",
+                "minProperties": 1,
+                "propertyNames": {
+                    "type": "string",
+                    "minLength": 1
+                },
                 "additionalProperties": {
                     "$ref": "KHR_character_skeleton_mapping.jointAssociation.schema.json"
                 }
