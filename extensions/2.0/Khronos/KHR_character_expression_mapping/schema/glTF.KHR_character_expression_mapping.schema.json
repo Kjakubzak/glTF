@@ -2,39 +2,51 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "KHR_character_expression_mapping glTF Document Extension",
     "type": "object",
-    "description": "glTF extension that enables encoding multiple expression set mappings, mapping source expressions present in the model to target expressions that a runtime/endpoint understands.",
+    "description": "Defines independent mappings from native expression drivers to endpoint outputs and from endpoint commands to native expression drivers.",
     "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
     "properties": {
         "expressionSetMappings": {
             "type": "object",
-            "description": "Dictionary of expression set mappings, where each key is a target expression set name.",
+            "description": "Nonempty dictionary of native-driver-to-endpoint-output mappings. Each key is an absolute URI identifying a version-stable endpoint expression vocabulary.",
+            "minProperties": 1,
+            "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uri",
+                "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+            },
             "additionalProperties": {
                 "type": "object",
-                "description": "Expression mapping dictionary where each key is a target expression name and each value is an array of source expression mappings.",
+                "description": "Nonempty endpoint-output dictionary. Each key is a nonempty endpoint expression identifier and each value lists native source contributions.",
+                "minProperties": 1,
+                "propertyNames": {
+                    "type": "string",
+                    "minLength": 1
+                },
                 "additionalProperties": {
                     "type": "array",
-                    "description": "Array of source expression mappings that contribute to the target expression.",
+                    "description": "Nonempty array of native source contributions to this endpoint output.",
+                    "minItems": 1,
                     "items": {
                         "type": "object",
+                        "description": "Weighted contribution from one native expression driver to an endpoint output.",
                         "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
                         "properties": {
                             "source": {
-                                "allOf": [
-                                    {
-                                        "$ref": "glTFid.schema.json"
-                                    }
-                                ],
-                                "description": "Index of the source expression in the top-level KHR_character_expression extension object.",
+                                "allOf": [ { "$ref": "glTFid.schema.json" } ],
+                                "description": "Index of the source expression in the top-level KHR_character_expression object.",
                                 "gltf_detailedDescription": "This value MUST be a valid index into the `expressions` array of the top-level `KHR_character_expression` extension object."
                             },
                             "name": {
                                 "type": "string",
-                                "description": "The name of the source expression.",
-                                "gltf_detailedDescription": "When defined, this value MUST exactly match the `expression` property of the expression referenced by `source`."
+                                "description": "Diagnostic copy of the source expression label.",
+                                "gltf_detailedDescription": "When defined, this value MUST exactly and case-sensitively match the `expression` property referenced by `source`. Resolution MUST use `source`, not `name`."
                             },
                             "weight": {
                                 "type": "number",
-                                "description": "Relative influence of this source expression on the target. Weights represent the proportional contribution needed to achieve the desired target result."
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "description": "Contribution coefficient from this native expression driver to the endpoint output."
                             },
                             "extensions": { },
                             "extras": { }
@@ -43,15 +55,69 @@
                             "source",
                             "weight"
                         ]
-                    },
-                    "minItems": 1
+                    }
+                }
+            }
+        },
+        "expressionSetInputMappings": {
+            "type": "object",
+            "description": "Nonempty dictionary of endpoint-command-to-native-driver input mappings. Each key is an absolute URI identifying a version-stable endpoint expression vocabulary.",
+            "minProperties": 1,
+            "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "format": "uri",
+                "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+            },
+            "additionalProperties": {
+                "type": "object",
+                "description": "Nonempty endpoint-command dictionary. Each key is a nonempty endpoint expression identifier and each value lists native target contributions.",
+                "minProperties": 1,
+                "propertyNames": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "additionalProperties": {
+                    "type": "array",
+                    "description": "Nonempty array of native target contributions from this endpoint command.",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "description": "Weighted contribution from one endpoint command to a native expression driver.",
+                        "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
+                        "properties": {
+                            "target": {
+                                "allOf": [ { "$ref": "glTFid.schema.json" } ],
+                                "description": "Index of the target expression driver in the top-level KHR_character_expression object.",
+                                "gltf_detailedDescription": "This value MUST be a valid index into the `expressions` array of the top-level `KHR_character_expression` extension object."
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Diagnostic copy of the target expression label.",
+                                "gltf_detailedDescription": "When defined, this value MUST exactly and case-sensitively match the `expression` property referenced by `target`. Resolution MUST use `target`, not `name`."
+                            },
+                            "weight": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "description": "Contribution coefficient from this endpoint command to the native expression driver."
+                            },
+                            "extensions": { },
+                            "extras": { }
+                        },
+                        "required": [
+                            "target",
+                            "weight"
+                        ]
+                    }
                 }
             }
         },
         "extensions": { },
         "extras": { }
     },
-    "required": [
-        "expressionSetMappings"
+    "anyOf": [
+        { "required": ["expressionSetMappings"] },
+        { "required": ["expressionSetInputMappings"] }
     ]
 }
