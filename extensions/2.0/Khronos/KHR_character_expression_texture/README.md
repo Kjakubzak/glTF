@@ -22,7 +22,7 @@ Written against the glTF 2.0 specification.
 Requires the extension(s): `KHR_character`, `KHR_character_expression`, `KHR_animation_pointer`, `KHR_texture_transform`
 Can be used alongside: `KHR_character_expression_mapping`
 
-Assets using `KHR_character_expression_texture` MUST list `KHR_character_expression_texture`, `KHR_character_expression`, `KHR_character`, `KHR_animation_pointer`, `KHR_texture_transform`, and the transitive `KHR_xmp_json_ld` dependency in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_texture` object MUST be attached to an expression entry, every selected animation channel MUST contain a `KHR_animation_pointer` target extension object, and every pointer MUST resolve to the `offset`, `scale`, or `rotation` property of an actual `KHR_texture_transform` extension object.
+Assets using `KHR_character_expression_texture` MUST list `KHR_character_expression_texture`, `KHR_character_expression`, `KHR_character`, `KHR_animation_pointer`, and `KHR_texture_transform` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_texture` object MUST be attached to an expression entry, every selected animation channel MUST contain a `KHR_animation_pointer` target extension object, and every pointer MUST resolve to the `offset`, `scale`, or `rotation` property of an actual `KHR_texture_transform` extension object.
 
 ## Overview
 

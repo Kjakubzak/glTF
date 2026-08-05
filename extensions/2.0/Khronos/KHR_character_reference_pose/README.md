@@ -22,7 +22,7 @@ Written against the glTF 2.0 specification.
 
 Requires the extension(s): `KHR_character`
 
-Assets using `KHR_character_reference_pose` MUST list `KHR_character_reference_pose`, `KHR_character`, and the transitive `KHR_xmp_json_ld` dependency in `extensionsUsed`. They MUST contain a top-level `KHR_character` extension object. The `KHR_xmp_json_ld` declaration does not require an XMP extension object or packet unless metadata is provided.
+Assets using `KHR_character_reference_pose` MUST list `KHR_character_reference_pose` and `KHR_character` in `extensionsUsed`. They MUST contain a top-level `KHR_character` extension object.
 
 ## Overview
 
@@ -142,7 +142,7 @@ Complete example showing a T-Pose reference for a simple 3-joint skeleton:
 ```json
 {
   "asset": { "version": "2.0" },
-  "extensionsUsed": ["KHR_character", "KHR_character_reference_pose", "KHR_xmp_json_ld"],
+  "extensionsUsed": ["KHR_character", "KHR_character_reference_pose"],
   "scene": 0,
   "scenes": [{ "nodes": [0] }],
   "nodes": [

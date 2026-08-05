@@ -22,7 +22,7 @@ Written against the glTF 2.0 specification.
 Requires the extension(s): `KHR_character`, `KHR_character_expression`
 Used in conjunction with: `KHR_character_expression_mapping`
 
-Assets using `KHR_character_expression_morphtarget` MUST list `KHR_character_expression_morphtarget`, `KHR_character_expression`, `KHR_character`, and the transitive `KHR_xmp_json_ld` dependency in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_morphtarget` object MUST be attached to an expression entry in that top-level expression object.
+Assets using `KHR_character_expression_morphtarget` MUST list `KHR_character_expression_morphtarget`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_morphtarget` object MUST be attached to an expression entry in that top-level expression object.
 
 Selected channels MAY use an ordinary animation target with `path` set to `"weights"`, or a `KHR_animation_pointer` target that resolves to `/nodes/{}/weights` or `/nodes/{}/weights/{}`. Only assets using the pointer form MUST list `KHR_animation_pointer` in `extensionsUsed` and contain the corresponding `KHR_animation_pointer` target extension object.
 

@@ -21,7 +21,7 @@
 Written against the glTF 2.0 specification.
 Requires the extension(s): `KHR_character`
 
-Assets using `KHR_character_expression` MUST list `KHR_character_expression`, `KHR_character`, and the transitive `KHR_xmp_json_ld` dependency in `extensionsUsed`. They MUST contain a top-level `KHR_character` extension object and a top-level `KHR_character_expression` extension object. The `KHR_xmp_json_ld` declaration does not require an XMP extension object or packet unless metadata is provided.
+Assets using `KHR_character_expression` MUST list `KHR_character_expression` and `KHR_character` in `extensionsUsed`. They MUST contain a top-level `KHR_character` extension object and a top-level `KHR_character_expression` extension object.
 
 ## Overview
 

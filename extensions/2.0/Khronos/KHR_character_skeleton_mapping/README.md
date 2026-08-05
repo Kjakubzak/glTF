@@ -21,7 +21,7 @@
 Written against the glTF 2.0 specification.
 Requires the extension(s):  `KHR_character`
 
-Assets using `KHR_character_skeleton_mapping` MUST list `KHR_character_skeleton_mapping`, `KHR_character`, and the transitive `KHR_xmp_json_ld` dependency in `extensionsUsed`. They MUST contain top-level `KHR_character_skeleton_mapping` and `KHR_character` extension objects. The `KHR_xmp_json_ld` declaration does not require an XMP extension object or packet unless metadata is provided.
+Assets using `KHR_character_skeleton_mapping` MUST list `KHR_character_skeleton_mapping` and `KHR_character` in `extensionsUsed`. They MUST contain top-level `KHR_character_skeleton_mapping` and `KHR_character` extension objects.
 
 ## Overview
 
@@ -49,8 +49,7 @@ Here's an example mapping from a custom rig into VRM Humanoid:
   "asset": { "version": "2.0" },
   "extensionsUsed": [
     "KHR_character",
-    "KHR_character_skeleton_mapping",
-    "KHR_xmp_json_ld"
+    "KHR_character_skeleton_mapping"
   ],
   "nodes": [
     { "name": "CharacterRoot", "children": [1] },

@@ -22,7 +22,7 @@ Written against the glTF 2.0 specification.
 Requires the extension(s): `KHR_character`, `KHR_character_expression`
 Can be used alongside: `KHR_character_expression_morphtarget`, `KHR_character_expression_joint`, `KHR_character_expression_texture`, or other expression sources
 
-Assets using `KHR_character_expression_mapping` MUST list `KHR_character_expression_mapping`, `KHR_character_expression`, `KHR_character`, and the transitive `KHR_xmp_json_ld` dependency in `extensionsUsed`. They MUST contain top-level `KHR_character_expression_mapping`, `KHR_character_expression`, and `KHR_character` extension objects. The `KHR_xmp_json_ld` declaration does not require an XMP extension object or packet unless metadata is provided.
+Assets using `KHR_character_expression_mapping` MUST list `KHR_character_expression_mapping`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They MUST contain top-level `KHR_character_expression_mapping`, `KHR_character_expression`, and `KHR_character` extension objects.
 
 ## Overview
 
@@ -49,8 +49,7 @@ Optionally, these expressions may be aligned with industry standards (or an endp
   "extensionsUsed": [
     "KHR_character",
     "KHR_character_expression",
-    "KHR_character_expression_mapping",
-    "KHR_xmp_json_ld"
+    "KHR_character_expression_mapping"
   ],
   "nodes": [{}],
   "buffers": [

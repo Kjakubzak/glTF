@@ -20,10 +20,7 @@
 
 Written against the glTF 2.0 specification.
 
-Requires the extension: `KHR_xmp_json_ld`
-
-Assets using `KHR_character` MUST list both `KHR_character` and `KHR_xmp_json_ld` in `extensionsUsed`. This declaration does not by itself require a top-level `KHR_xmp_json_ld` extension object, an XMP packet, or an `asset`-level packet reference. When character metadata is provided, it MUST be encoded and attached as specified by `KHR_xmp_json_ld`. For background on this approach, see:
-[KHR_xmp_json_ld](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_xmp_json_ld)
+This extension has no extension dependencies.
 
 ## Overview
 
@@ -33,7 +30,7 @@ This extension does not define character features directly but acts as a root de
 
 The extension references the root `node` that represents the character. This glTF 2.0 version of the extension identifies one character per asset. Support for multiple independently addressable characters is deferred for consideration alongside glTF 2.1 support.
 
-Structured character metadata, when present, is attached through `KHR_xmp_json_ld`. The presence of an XMP packet, a packet reference, and individual metadata properties remains optional unless another specification requires them.
+Character metadata MAY be attached using `KHR_xmp_json_ld`; neither metadata nor XMP support is required by this extension.
 
 ## Extension Schema
 
@@ -155,7 +152,6 @@ The following properties are examples that authoring pipelines may find useful. 
 
 - `rootNode` is required, representing the index of the glTF `node` that serves as the root of the character hierarchy. This node SHOULD be a common ancestor of all nodes containing character-related meshes and joints.
 - Consumers should use this marker as a signal to search for additional character-related extensions, including skeletal, expression, and other khronos character extensions.
-- Consumers of `KHR_character` MUST support its `KHR_xmp_json_ld` dependency. Assets are not required to contain an XMP packet solely because they use `KHR_character`.
 
 ## Known Implementations
 
