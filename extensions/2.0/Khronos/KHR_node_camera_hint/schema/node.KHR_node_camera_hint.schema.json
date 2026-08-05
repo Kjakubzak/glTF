@@ -2,28 +2,28 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "node.KHR_node_camera_hint.schema.json",
   "title": "KHR_node_camera_hint glTF Node Extension",
-  "description": "Marks a node as an authored camera positioning suggestion. The node's world-space transform defines the recommended camera placement. The runtime MAY use this as a default view, orbit center, portrait framing, or other camera-related viewpoint.",
+  "description": "Associates a node with a passive, advisory camera descriptor. The node's global transform supplies an authored pose using the core camera convention with scaling ignored.",
   "type": "object",
   "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
   "properties": {
     "role": {
       "type": "string",
-      "description": "The semantic purpose of this camera hint. Determines how runtimes interpret the node's transform. Standard vocabulary values provide interoperability guarantees; custom values are permitted for domain-specific use cases.",
+      "description": "Nonempty semantic role for this camera hint. Standard and custom roles classify authored intent but do not select or activate a camera.",
       "minLength": 1
     },
     "camera": {
       "allOf": [ { "$ref": "glTFid.schema.json" } ],
-      "description": "Index of a glTF camera in the root cameras array whose projection parameters (FOV, clip planes, type) and any camera extensions apply to this hint. Advisory — runtimes MAY override.",
-      "gltf_detailedDescription": "This value MUST be a valid index into the cameras array."
+      "description": "Advisory index of a glTF camera whose projection definition is associated with this hint. The reference does not instantiate the camera or override node.camera.",
+      "gltf_detailedDescription": "This value MUST be a valid index into the top-level `cameras` array. Extensions on the referenced camera retain their own support contracts."
     },
     "targetNode": {
       "allOf": [ { "$ref": "glTFid.schema.json" } ],
-      "description": "Index of a glTF node that this camera should orient toward. When specified, the camera's look-at direction is computed from the vector between this node and the target node.",
-      "gltf_detailedDescription": "This value MUST be a valid index into the nodes array and MUST NOT refer to the node containing this extension."
+      "description": "Index of a different glTF node whose global translation supplies an advisory forward direction. The direction does not define up, roll, or a complete orientation; coincident positions use the hint node's authored rotation.",
+      "gltf_detailedDescription": "This value MUST be a valid index into the top-level `nodes` array and MUST NOT refer to the node containing this extension."
     },
     "label": {
       "type": "string",
-      "description": "Human-readable label for this camera position. Used for UI display in model viewers and camera selection menus.",
+      "description": "Nonempty human-readable label for authoring tools and inspectors. It has no camera behavior.",
       "minLength": 1
     },
     "extensions": { },
