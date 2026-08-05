@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "node.KHR_node_visibility_hint.schema.json",
   "title": "KHR_node_visibility_hint glTF Node Extension",
-  "description": "Associates a node with a per-view visibility role inherited by descendants. The role is evaluated as a predicate and does not mutate node visibility state.",
+  "description": "Associates a node with a per-view visibility role inherited by descendants. Evaluating the predicate does not alter glTF-authored or animated node state; the implementation technique is not prescribed.",
   "type": "object",
   "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
   "properties": {

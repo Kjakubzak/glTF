@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "mesh.primitive.KHR_mesh_primitive_visibility_hint.schema.json",
   "title": "KHR_mesh_primitive_visibility_hint glTF Mesh Primitive Extension",
-  "description": "Associates one mesh primitive with a per-view visibility role. The role is evaluated as a predicate, does not inherit, and does not mutate material or renderer state.",
+  "description": "Associates one mesh primitive with a non-inherited per-view visibility role. Evaluating the predicate does not alter glTF-authored or animated data; the implementation technique is not prescribed.",
   "type": "object",
   "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
   "properties": {

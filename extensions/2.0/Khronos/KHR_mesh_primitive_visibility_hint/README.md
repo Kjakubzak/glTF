@@ -27,7 +27,7 @@ This extension has no extension dependencies. It composes with [`KHR_node_visibi
 
 Some assets combine geometry with different view-context roles into separate primitives of one mesh. This extension associates a mesh primitive with a view-context role so that its visual contribution can be evaluated independently for each render view.
 
-The role is a pure per-view predicate. The extension does not mutate a material, renderer, primitive, mesh, or node; select the active context; create or activate a camera; or define transitions between contexts.
+The role defines a pure per-view predicate. Evaluating it does not alter glTF-authored or animated material, primitive, mesh, or node data; select the active context; create or activate a camera; or define transitions between contexts. Implementations may use temporary engine state as described under [Per-view and per-instance evaluation](#per-view-and-per-instance-evaluation).
 
 ## Extension usage
 
@@ -92,7 +92,7 @@ The annotation belongs to the mesh primitive and therefore supplies the same pri
 
 Implementations MUST also evaluate the predicate independently for each render view. Two views rendered during the same frame may supply different contexts and obtain different primitive sets without changing asset state.
 
-An implementation may use any internal technique that is observably equivalent to the predicate. It MUST NOT observably overwrite authored materials or visibility properties, retain a resolved hint as persistent global primitive or mesh state, or allow one node instance or render view to contaminate another. Any temporary internal mutation MUST be removed before it can affect another instance or view or become externally observable.
+Implementations MAY use material or shader substitution, renderer filtering, draw-list filtering, primitive splitting, or any other technique that produces the required result independently for each view and primitive instance. Implementation state MUST NOT modify glTF-authored or animated data, be written back as authored asset state on export, or allow evaluation for one view or instance to affect another. If an implementation temporarily changes an engine representation such as a material binding, it MUST restore or isolate that state before evaluating another view or instance.
 
 When evaluation makes `renderPrimitiveInstance` false, that primitive instance MUST NOT contribute to any visual render pass for that view, including color, depth, or shadow output. Merely replacing its surface color with a transparent material is not sufficient conformance. Picking, selection, physics, animation evaluation, and arbitrary application queries are outside this extension's visual-presentation contract.
 

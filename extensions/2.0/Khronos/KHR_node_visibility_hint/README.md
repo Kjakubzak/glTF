@@ -27,7 +27,7 @@ This extension has no extension dependencies. It composes with [`KHR_node_visibi
 
 Many applications present the same asset in more than one view context. For example, character head geometry may be useful in a third-person view but obstruct a first-person camera. This extension associates a node and, by inheritance, its descendants with a view-context role.
 
-The role is evaluated as a pure predicate for each node instance and render view. The extension does not mutate node state, select the active context, create or activate a camera, or define transitions between contexts.
+The role defines a pure predicate for each node instance and render view. Evaluating it does not alter glTF-authored or animated node state, select the active context, create or activate a camera, or define transitions between contexts. Implementations may use temporary engine state as described under [Per-view and per-instance evaluation](#per-view-and-per-instance-evaluation).
 
 ## Extension usage
 
@@ -91,7 +91,7 @@ Implementations MUST evaluate the predicate independently for each render view a
 
 When multiple nodes reference the same mesh, each containing node uses its own resolved hint role and ancestor `KHR_node_visibility` state. Implementations MUST NOT cache one node's result as visibility state on the shared mesh.
 
-An implementation may use any internal technique that is observably equivalent to these predicates. It MUST NOT observably overwrite authored or animated `KHR_node_visibility.visible` values, retain a resolved hint as persistent global node state, or allow evaluation for one view to contaminate another view. Any temporary internal mutation MUST be removed before it can affect another view or become externally observable.
+Implementations MAY use material or shader substitution, renderer filtering, draw-list filtering, node or primitive splitting, or any other technique that produces the required result independently for each view and node instance. Implementation state MUST NOT modify glTF-authored or animated data, be written back as authored asset state on export, or allow evaluation for one view or instance to affect another. If an implementation temporarily changes an engine representation such as a material binding or renderer flag, it MUST restore or isolate that state before evaluating another view or instance.
 
 When evaluation makes a node's visual-content predicate false, the node's visual features MUST NOT contribute to visual rendering for that view. Picking, selection, physics, audio, animation evaluation, and arbitrary application queries are outside this extension's visual-presentation contract.
 
