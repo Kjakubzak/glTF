@@ -4,7 +4,7 @@
 
 - Ken Jakubzak, Meta
 - Hideaki Eguchi / VirtualCast, Inc.
-- K. S. Ernest (iFire) Lee, Independent Contributor / https://github.com/fire
+- K. S. Ernest (iFire) Lee, Independent Contributor / <https://github.com/fire>
 - Shinnosuke Iwaki / VirtualCast, Inc.
 - 0b5vr / pixiv Inc.
 - Leonard Daly, Independent Contributor
@@ -16,77 +16,123 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
-Requires the extension(s): `KHR_character`, `KHR_character_expression`
-Works alongside: `KHR_character_expression_mapping`, `KHR_character_expression_joint`, `KHR_character_expression_texture`, `KHR_character_expression_morphtarget`.
 
-Assets using `KHR_character_expression_mask` MUST list `KHR_character_expression_mask`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_mask` object MUST be attached to an expression entry in that top-level expression object.
+Requires the extensions: `KHR_character` and `KHR_character_expression`.
 
-## Overview
+Assets using `KHR_character_expression_mask` MUST list `KHR_character_expression_mask`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. A `KHR_character_expression_mask` object MUST be attached to an expression entry in the top-level `KHR_character_expression.expressions` array.
 
-The `KHR_character_expression_mask` extension allows artists to define how one expression masks or influences another expression. This prevents unwanted interactions between different expressions, such as:
+## Overview (Informative)
 
-- Emotional expressions (e.g., "happy", "angry") conflicting with lip-sync phonemes
-- Multiple expressions targeting the same facial region
-- Procedural animations overriding or blending with authored animations
+`KHR_character_expression_mask` lets one native expression attenuate another expression's driver before response-animation evaluation. Standard `blend` and `block` masks are deterministic scalar factors evaluated from one immutable native-driver vector.
 
-By defining masks on expressions, this extension enables runtime systems to correctly resolve conflicts between expressions without application-specific logic.
+This extension does not acquire drivers, select an expression mapping set, define final animation mixing, or prescribe how sampled property values combine with other animation systems.
 
-### Motivation
+## Extension usage
 
-When applying emotional expressions such as "happy" or "angry" while lip-sync is active, the avatar's expression may collapse depending on the implementation—for example, "opening the mouth twice." However, certain avatars may want to express both expressions simultaneously with controlled blending. This behavior is not deterministic from the application side and is better defined by the asset.
+The extension object contains a nonempty `masks` array. Each mask's implicit source is the array index of the expression entry containing that extension object. Its required `target` is an index into the same top-level expressions array.
 
-This extension provides VRM-compatible expression override behavior, allowing assets to define how expressions interact with each other.
+An asset MAY list `KHR_character_expression_mask` in `extensionsRequired`. A consumer claiming support for an asset using this extension MUST evaluate every standard mask and apply the custom-type rules below. A consumer that cannot provide that behavior MUST treat the asset as unsupported when the extension is listed in `extensionsRequired`.
 
-## Use Cases
+### Extension object
 
-- Define how emotional expressions reduce lip-sync phoneme influence
-- Prevent conflicting expressions from combining incorrectly
-- Allow artists to control expression priority and blending behavior
-- Enable consistent cross-platform expression behavior
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `masks` | array | Yes | Nonempty array of mask objects originating from the containing expression. |
 
-## Behavior
+### Mask object
 
-An expression with masks defines how it affects other target expressions. It is allowed to have multiple masks targeting the same expression from different sources, and the total influence is the product of all mask influences.
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `target` | integer | Yes | — | Index of the native expression attenuated by this mask. |
+| `name` | string | No | — | Diagnostic copy of the target expression's label. When present, it MUST match exactly and case-sensitively. |
+| `type` | string | No | `"blend"` | Standard `"blend"` or `"block"`, or a vendor-extension-name-shaped custom token. |
+| `amount` | number | No | `1` | Attenuation amount in `[0, 1]`. |
+| `threshold` | number | No | `0` | Strict activation threshold in `[0, 1]` for `"block"`. |
 
-### "blend" Masks
+The `target` index is authoritative. Consumers MUST NOT resolve a mask by `name`.
 
-A "blend" mask reduces the target expression proportionally to the source expression's value.
+## Immutable input and output vectors
 
-Given two expressions "aa" (lip-sync phoneme) and "happy" (emotion), where "happy" has a "blend" mask targeting "aa" with an amount of `x`:
+The host supplies one final native-driver vector after any host-defined driver acquisition, mapping-set selection, and arbitration between direct-native and mapped input surfaces. Let `u[i]` be the finite value in `[0, 1]` for native expression index `i`. This entire vector is an immutable snapshot for one mask evaluation.
 
-```text
-aa_out = aa_in * (1 - x * happy_in)
-happy_out = happy_in
-```
+The mask operation produces an effective driver vector `v` of the same length. Every mask factor reads only `u`; no factor reads a partially computed or final value from `v`.
 
-When "happy" is fully active (1.0) with amount 0.5, the "aa" expression is reduced to 50% of its input value.
-
-### "block" Masks
-
-A "block" mask fully reduces the target expression when the source expression exceeds a threshold.
-
-Given two expressions "aa" and "angry", where "angry" has a "block" mask targeting "aa" with an amount of `x` and a threshold of `y`:
+For a mask `m`, define:
 
 ```text
-aa_out = aa_in * (1 - (angry_in > y ? x : 0))
-angry_out = angry_in
+source(m) = index of the expression entry containing m
+target(m) = m.target
+amount(m) = m.amount when present; otherwise 1
+threshold(m) = m.threshold when present; otherwise 0
 ```
 
-When the threshold is 0, the target is blocked unless the source expression is completely inactive.
+## Standard mask factors
 
-### Execution Order
+For a standard `"blend"` mask:
 
-The execution order of expressions does not affect the result because:
+```text
+factor(m, u) = 1 - amount(m) * u[source(m)]
+```
 
-- The influence only evaluates the input values of expressions
-- The total influence is the product of all masks targeting the same expression, which is commutative
+For a standard `"block"` mask:
 
-## Schema
+```text
+factor(m, u) =
+    1 - amount(m)    when u[source(m)] > threshold(m)
+    1                otherwise
+```
 
-The following is a partial extension fragment. Dependency declarations, the character objects, and animations are omitted.
+The comparison is strictly greater-than. When the source value equals the threshold, the block mask does not activate. The `threshold` property has no standard effect on a `"blend"` mask.
+
+Given all masks in all expression entries, each effective target driver is:
+
+```text
+v[t] = u[t] * product(
+    factor(m, u)
+    for every mask m where target(m) == t
+)
+```
+
+An empty product is `1`, so a driver with no incoming masks is unchanged. Because `u`, `amount`, `threshold`, and every supported factor are in `[0, 1]`, every value in `v` is also in `[0, 1]`.
+
+All masks targeting an expression participate in the product. Duplicate masks contribute duplicate factors. A self-mask reads the source's unmasked value from `u` and contributes normally. Cycles do not recurse: every edge in a cycle reads the same immutable `u`. JSON object order, expression-array traversal order, and mask-array order do not affect the mathematical result.
+
+An expression's outgoing masks always read its value from `u`, even when that expression also has incoming masks and therefore a different value in `v`.
+
+## Custom mask types
+
+A custom mask type is any value other than `"blend"` or `"block"`. It MUST be shaped like a glTF vendor extension name: an uppercase prefix, an underscore, and a lowercase snake-case suffix, for example `"ACME_expression_mask_curve"`.
+
+A custom token MAY appear without a companion extension object. A bare custom token, or a custom token whose companion is not supported, has the deterministic identity factor:
+
+```text
+factor(m, u) = 1
+```
+
+Portable custom behavior requires an extension object on the same mask object whose key exactly equals the mask's `type` value. That companion specification MUST define exactly one finite factor in `[0, 1]` for the mask. The factor MUST be a deterministic function only of the immutable vector `u` and authored data on the mask and companion objects. It MUST NOT read any value from `v`, prior evaluations, time, or unspecified host inputs; mutate a driver; directly replace `v[target(m)]`; or otherwise bypass the product equation. A supported companion's factor participates in the same product as every standard factor.
+
+The companion extension MUST be listed in `extensionsUsed`. If correct presentation depends on its custom factor, both `KHR_character_expression_mask` and the companion extension MUST be listed in `extensionsRequired`. An unsupported optional companion uses the identity factor `1`; an unsupported required companion makes the asset unsupported under the ordinary glTF extension rules.
+
+An unrelated or differently named extension object on the same mask does not define the custom type. It follows its own specification, while the unmatched custom token uses the identity factor.
+
+An implementation claiming read-write or round-trip support for this extension that retains a custom mask when re-emitting an asset MUST preserve its unrecognized custom `type` token. If it retains a same-object companion extension, it MUST preserve that extension's payload. Deliberately removing a custom mask or companion extension is an authoring operation and requires the ordinary corresponding updates to `extensionsUsed` and `extensionsRequired`. Render-only consumers are not required to provide serialization.
+
+## Response-evaluator boundary
+
+The effective vector `v` is the mask operation's output. A character-expression response evaluator consumes `v[i]` as the current driver for expression entry `i`.
+
+This extension does not define how simultaneous response animations are accumulated, prioritized, blended, or otherwise composed when they affect the same property. Those final property-composition choices remain host-defined.
+
+## Standard-mask example (Informative)
+
+The following partial fragment omits dependency objects and referenced animations. Expression indices are shown in comments outside the JSON: `aa` is index 0, `happy` is index 1, and `angry` is index 2.
 
 ```json
 {
@@ -95,20 +141,12 @@ The following is a partial extension fragment. Dependency declarations, the char
       "expressions": [
         {
           "expression": "aa",
-          "animation": 0,
-          "extensions": {
-            "KHR_character_expression_morphtarget": {
-              "channels": [0]
-            }
-          }
+          "animation": 0
         },
         {
           "expression": "happy",
           "animation": 1,
           "extensions": {
-            "KHR_character_expression_morphtarget": {
-              "channels": [0]
-            },
             "KHR_character_expression_mask": {
               "masks": [
                 {
@@ -125,15 +163,13 @@ The following is a partial extension fragment. Dependency declarations, the char
           "expression": "angry",
           "animation": 2,
           "extensions": {
-            "KHR_character_expression_morphtarget": {
-              "channels": [0]
-            },
             "KHR_character_expression_mask": {
               "masks": [
                 {
                   "target": 0,
                   "name": "aa",
                   "type": "block",
+                  "amount": 1.0,
                   "threshold": 0.2
                 }
               ]
@@ -146,58 +182,60 @@ The following is a partial extension fragment. Dependency declarations, the char
 }
 ```
 
-## Properties
+For `u = [1, 0.5, 0.2]`, the blend factor is `0.75` and the block factor is `1` because the strict threshold comparison is false. Therefore `v[0] = 0.75`. If `u[2]` is greater than `0.2`, the block factor becomes `0` and `v[0]` becomes `0`.
 
-### KHR_character_expression_mask
+## Custom-type examples (Informative)
 
-| Property | Type  | Description                                                           | Required |
-| -------- | ----- | --------------------------------------------------------------------- | -------- |
-| `masks`  | array | An array of mask objects that define how this expression affects others | Yes      |
+This bare custom mask is valid and evaluates to identity under this extension:
 
-### Mask Object
-
-| Property    | Type   | Description                                                                                      | Required |
-| ----------- | ------ | ------------------------------------------------------------------------------------------------ | -------- |
-| `target`    | integer | Index of the target expression in the top-level `KHR_character_expression.expressions[]` array. | Yes      |
-| `name`      | string | Optional name of the target expression. When present, it MUST exactly match the referenced expression's `expression` property. | No       |
-| `type`      | string | The mask type. `"blend"` and `"block"` are standardized; custom nonempty strings are permitted. Default: `"blend"` | No       |
-| `amount`    | number | The amount of influence (0.0–1.0). Default: `1.0`                                                | No       |
-| `threshold` | number | For `"block"` type: the threshold above which the target is blocked (0.0–1.0). Default: `0.0`   | No       |
-
-Each `target` MUST resolve to an entry in the top-level `KHR_character_expression.expressions[]` array. Expression indices are independent of expression labels and remain unambiguous when labels are duplicated or changed.
-
-When `name` is present, it MUST exactly and case-sensitively match the referenced expression's `expression` property. Resolution is always performed using `target`.
-
-### Mask Type Enum
-
-The following values have standardized behavior. Other nonempty strings are application-defined mask types and MUST be preserved by readers even when their behavior is not understood.
-
-| Value   | Description                                                                            |
-| ------- | -------------------------------------------------------------------------------------- |
-| `blend` | Reduces the target proportionally to this expression's value multiplied by the amount  |
-| `block` | Fully reduces the target by the amount when this expression exceeds the threshold      |
-
-## Implementation Notes
-
-- Multiple masks from different expressions may target the same expression; the combined effect is multiplicative
-- The `threshold` property is only meaningful for `"block"` type masks
-- Implementations should evaluate all mask influences before applying expression outputs
-- Expression values should be normalized to the [0.0–1.0] range
-
-## Blending Behavior Recommendations
-
-When blending expression values from multiple sources, implementations **SHOULD** use traditional linear interpolation (lerp):
-
-```text
-result = lerp(base_value, blend_value, blend_weight)
-       = base_value + blend_weight * (blend_value - base_value)
+```json
+{
+  "target": 0,
+  "type": "ACME_expression_mask_curve"
+}
 ```
 
-## Known Implementations
+The following partial fragment demonstrates where a portable companion extension would be attached. The payload is illustrative; only the `ACME_expression_mask_curve` specification can define its factor.
+
+```json
+{
+  "target": 0,
+  "type": "ACME_expression_mask_curve",
+  "extensions": {
+    "ACME_expression_mask_curve": {
+      "controlPoints": [0.0, 0.25, 1.0]
+    }
+  }
+}
+```
+
+An asset containing the companion object must list `ACME_expression_mask_curve` in `extensionsUsed`. When the custom factor is essential, it must list both `KHR_character_expression_mask` and `ACME_expression_mask_curve` in `extensionsRequired`.
+
+## Validation boundary
+
+The JSON Schemas enforce nonempty mask arrays, required non-negative target indices, nonempty diagnostic names, standard or vendor-extension-name-shaped type strings, and `amount` and `threshold` values in `[0, 1]`.
+
+A validator that claims to validate this extension MUST additionally:
+
+- verify placement on an expression entry;
+- resolve every `target` against the top-level expressions array;
+- verify every optional `name` against the referenced expression label;
+- verify the base extension declarations and dependency objects;
+- for a custom type with a same-named companion object, verify ordinary `extensionsUsed` and `extensionsRequired` declarations; and
+- apply any additional structural rules defined by a supported companion specification.
+
+Bare custom types are valid and use the identity fallback. A validator does not execute mask equations or validate host-defined final animation composition.
+
+## Known implementations (Informative)
 
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and Unity demos.
+
+## Schema
+
+- [KHR_character_expression.KHR_character_expression_mask.schema.json](./schema/KHR_character_expression.KHR_character_expression_mask.schema.json)
+- [KHR_character_expression_mask.mask.schema.json](./schema/KHR_character_expression_mask.mask.schema.json)
 
 ## License
 
 This extension is licensed under the Khronos Group Extension License.
-See: https://www.khronos.org/registry/gltf/license.html
+See: <https://www.khronos.org/registry/gltf/license.html>

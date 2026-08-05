@@ -2,21 +2,22 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Mask",
     "type": "object",
-    "description": "Defines how the parent expression affects a target expression.",
+    "description": "Defines one multiplicative factor from the containing source expression to a target expression. All factors read one immutable pre-mask driver vector.",
     "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
     "properties": {
         "target": {
             "allOf": [ { "$ref": "glTFid.schema.json" } ],
-            "description": "Index of the target expression that this mask will affect.",
+            "description": "Index of the native expression driver attenuated by this mask.",
             "gltf_detailedDescription": "This value MUST be a valid index into the `expressions` array of the top-level `KHR_character_expression` extension object."
         },
         "name": {
             "type": "string",
-            "description": "The name of the target expression.",
-            "gltf_detailedDescription": "When defined, this value MUST exactly match the `expression` property of the expression referenced by `target`."
+            "minLength": 1,
+            "description": "Diagnostic copy of the target expression label.",
+            "gltf_detailedDescription": "When defined, this value MUST exactly and case-sensitively match the `expression` property referenced by `target`. Resolution MUST use `target`, not `name`."
         },
         "type": {
-            "description": "The type of the mask. 'blend' reduces the target proportionally to this expression's value. 'block' fully reduces the target when this expression exceeds the threshold.",
+            "description": "Mask factor type. Standard values are 'blend' and 'block'. A custom value is shaped like a glTF vendor extension name and uses identity behavior unless a supported same-object companion extension defines one bounded factor.",
             "anyOf": [
                 {
                     "const": "blend"
@@ -26,21 +27,21 @@
                 },
                 {
                     "type": "string",
-                    "minLength": 1
+                    "pattern": "^[A-Z0-9]+_[a-z0-9]+(?:_[a-z0-9]+)*$"
                 }
             ],
             "default": "blend"
         },
         "amount": {
             "type": "number",
-            "description": "The amount of influence this mask has on the target expression. A value of 1.0 means full influence.",
+            "description": "Attenuation amount used by the standard 'blend' and 'block' factors.",
             "minimum": 0.0,
             "maximum": 1.0,
             "default": 1.0
         },
         "threshold": {
             "type": "number",
-            "description": "For 'block' type masks, the threshold value above which the target expression is blocked. When this expression's value exceeds the threshold, the target is reduced by the amount.",
+            "description": "Strict source-driver threshold for a standard 'block' factor. The factor activates only when the source value is greater than this value.",
             "minimum": 0.0,
             "maximum": 1.0,
             "default": 0.0
