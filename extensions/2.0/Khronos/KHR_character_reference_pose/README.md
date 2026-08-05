@@ -16,6 +16,10 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
@@ -24,20 +28,21 @@ Requires the extension(s): `KHR_character`
 
 Assets using `KHR_character_reference_pose` MUST list `KHR_character_reference_pose` and `KHR_character` in `extensionsUsed`. They MUST contain a top-level `KHR_character` extension object.
 
-## Overview
+## Overview (Informative)
 
-The `KHR_character_reference_pose` extension defines canonical reference poses for character skeletons by tagging standard glTF animations with semantic pose type information. These poses serve as neutral references that support animation retargeting, mesh deformation validation, and consistency across toolchains.
+The `KHR_character_reference_pose` extension identifies a standard glTF animation whose ordinary node translation, rotation, and scale channels store one static local-space pose. The optional `poseType` label records the author's classification of that pose.
 
-Reference poses are stored as single-frame (or single-keyframe) animations using the standard glTF animation infrastructure, providing:
+The extension does not define a retargeting algorithm, joint vocabulary, anatomical requirements, skin bind pose, playback policy, or animation-mixing behavior. Applications may use the stored pose as input to systems that define those behaviors separately.
 
-- **TRS format**: Local-space translation, rotation, and scale — the format required by retargeting systems
-- **Binary storage**: Efficient accessor-based storage via existing animation buffers
-- **Compression support**: Normalized quaternions and other animation compression techniques
-- **Universal tooling**: 100% compatibility with existing glTF viewers and tools
+## Extension usage
 
-## Extension Schema
+The extension object MUST be attached to an animation object. The tagged animation MUST satisfy the validity requirements below.
 
-This extension is applied to individual animations in the glTF file, marking them as reference poses with a semantic `poseType`.
+An asset MAY list `KHR_character_reference_pose` in `extensionsRequired`. A consumer claiming support for this extension MUST discover every tagged animation and interpret its static local node TRS values as specified below. A consumer that cannot do so MUST treat an asset listing the extension in `extensionsRequired` as unsupported, according to the glTF 2.0 extension rules.
+
+### Extension object
+
+The following partial fragment shows the extension on a tagged animation. Accessors and buffers are omitted.
 
 ```json
 {
@@ -70,74 +75,61 @@ This extension is applied to individual animations in the glTF file, marking the
 
 | Property   | Type   | Required | Default  | Description |
 |------------|--------|----------|----------|-------------|
-| `poseType` | string | No       | `TPose`  | The semantic classification of this reference pose. |
+| `poseType` | string | No       | `TPose`  | Nonempty classification label for this reference pose. Omission resolves to `TPose`. |
 
-### poseType Values
+### Pose labels (Informative)
 
-The `poseType` property supports predefined values with specific semantics, but also accepts any custom string for extensibility:
+The labels below are common authoring conventions. They are author assertions, not machine-verifiable anatomy. Stored local TRS values are authoritative when a label and the data appear inconsistent.
 
 | Value    | Description |
 |----------|-------------|
-| `TPose`  | Arms extended horizontally. Common neutral rest pose for retargeting. |
-| `APose`  | Arms angled downward (~45°). Used by some character authoring tools. |
-| `IPose`  | Arms resting at sides, parallel to the body. Natural standing pose. |
-| *custom* | Any string for poses that do not fit the predefined types (e.g., `"RelaxedPose"`, `"CombatStance"`). |
+| `TPose`  | Commonly describes a pose with arms extended horizontally. |
+| `APose`  | Commonly describes a pose with arms angled downward. |
+| `IPose`  | Commonly describes a pose with arms resting beside the body. |
+| *custom* | Any other nonempty author-defined label, such as `"RelaxedPose"`. |
 
-## Animation Structure
+Omitting `poseType` is equivalent to specifying `"TPose"`. Multiple tagged animations may use the same label; animation array indices remain authoritative.
 
-Reference poses use the standard glTF animation structure with specific conventions:
+## Reference-pose validity
 
-### Channels
+A tagged animation MUST conform to the glTF 2.0 animation requirements and to all of the following additional requirements:
 
-Each joint that participates in the reference pose should have channels for the transforms that define its pose:
+1. The animation MUST contain at least one channel.
+2. Every channel MUST target an ordinary node `translation`, `rotation`, or `scale` property. The channel target MUST contain `node`; `weights`, `KHR_animation_pointer`, and other target domains MUST NOT be used.
+3. The input accessor of every sampler referenced by a channel MUST have `count` equal to `1`.
+4. The effective interpolation of every referenced sampler MUST be `LINEAR` or `STEP`. An omitted `interpolation` property has the core default `LINEAR`. `CUBICSPLINE` and any other interpolation mode MUST NOT be used.
+5. Each referenced output accessor MUST have the type, component type, element count, and value validity required by core glTF for its channel target and interpolation mode.
 
-- **`rotation`**: VEC4 quaternion (required for most joints)
-- **`translation`**: VEC3 position (required for root, optional for others)
-- **`scale`**: VEC3 scale (optional, typically omitted when uniform)
+The single timestamp is not required to be `0`. `STEP` interpolation is not required. With one keyframe, core endpoint behavior yields the same static sample at every requested time for `LINEAR` and `STEP` interpolation.
 
-### Samplers
+For each node targeted by one or more channels, its resolved reference-pose value is a local TRS transform. A targeted component uses the referenced sampler's single output value. An untargeted component uses the node's authored static value, or the corresponding core glTF default when that value is omitted.
 
-- **`interpolation`**: Should be `STEP` since poses are static snapshots
-- **`input`**: Time accessor with a single value (typically `0.0`)
-- **`output`**: Transform data accessor
+The extension does not require a skin, require targeted nodes to be skin joints, require complete node or joint coverage, require a unique pose label, or validate the anatomical meaning of a label. Samplers not referenced by a channel do not contribute to the reference pose.
 
-### Accessors
+Tagging an animation does not change its ordinary core glTF playback behavior. This extension only assigns reference-pose meaning to the static local TRS values stored by the animation.
 
-| Channel Path   | Accessor Type | Component Type(s) |
-|----------------|---------------|-------------------|
-| `translation`  | `VEC3`        | float |
-| `rotation`     | `VEC4`        | float, or normalized byte/short |
-| `scale`        | `VEC3`        | float |
+### Validation boundary
 
-## Relationship to glTF 2.0 Skinning
+The JSON Schema enforces only the extension object's local structure: `poseType`, when present, is a nonempty string. Core glTF schemas enforce the ordinary animation object's local structure.
 
-This extension defines **reference poses for retargeting**, which are distinct from the skinning **bind pose**:
+A glTF Validator or authoring tool that claims to validate this extension MUST perform the cross-object checks that JSON Schema cannot express:
 
-| Concept | Definition | Location in glTF |
-|---------|------------|------------------|
-| **Bind Pose** | The pose used when skinning weights were painted | `inverse(skin.inverseBindMatrices)` |
-| **Reference Pose** | A canonical pose for retargeting (T-Pose, A-Pose) | This extension |
+- verify extension placement on an animation;
+- resolve each channel, sampler, node, and accessor index;
+- verify that every channel target is ordinary node TRS;
+- verify that every channel-referenced input accessor has exactly one element;
+- verify that every channel-referenced sampler's effective interpolation is `LINEAR` or `STEP`; and
+- apply the core output accessor cardinality and format checks.
 
-These may or may not be the same pose. For example:
+## Relationship to skinning and retargeting (Informative)
 
-- An artist might paint skinning weights in an A-Pose
-- But the animation retargeting system requires a T-Pose reference
-- Both can coexist: the bind pose in `inverseBindMatrices`, the T-Pose in this extension
+The reference pose is independent of skinning state. It does not modify `skin.inverseBindMatrices`, determine a bind pose, or participate in skin deformation calculations. A tagged animation may target nodes that are not skin joints, and an asset may use this extension without a skin.
 
-> **Note**: Reference poses defined by this extension are NOT used for skinning calculations. They provide semantic information for retargeting and other toolchain operations.
-
-## Implementation Notes
-
-- **Single keyframe**: Reference poses typically have one keyframe at `t=0`. The animation represents a static pose, not a motion.
-- **Local space**: All transforms are in local space relative to the parent node, matching standard glTF animation behavior.
-- **Joint coverage**: The animation should include channels for all joints relevant to the pose. Joints without channels retain their default node transforms.
-- **Multiple poses**: Multiple reference poses can exist in a single asset — simply tag multiple animations with this extension using different `poseType` values.
-- **Discovery**: To find reference poses, iterate through the `animations` array and check for the presence of this extension.
-- **Playback**: Reference pose animations can be "played" like any animation, which will set the skeleton to the reference pose — useful for visualization and debugging.
+A retargeter may consume the stored pose, but this extension does not define source/target correspondence, transform conversion, scale handling, constraints, or a solver. Therefore it does not by itself guarantee lossless, universal, or interoperable retargeting.
 
 ## Example
 
-Complete example showing a T-Pose reference for a simple 3-joint skeleton:
+Complete example showing a T-Pose reference for a simple three-node hierarchy:
 
 ```json
 {
@@ -237,9 +229,6 @@ Complete example showing a T-Pose reference for a simple 3-joint skeleton:
       ]
     }
   ],
-  "skins": [
-    { "joints": [0, 1, 2] }
-  ],
   "extensions": {
     "KHR_character": {
       "rootNode": 0
@@ -248,25 +237,14 @@ Complete example showing a T-Pose reference for a simple 3-joint skeleton:
 }
 ```
 
-## Migration from KHR_character_skeleton_bindpose
+## Implementation notes (Informative)
 
-If you have assets using the previous `KHR_character_skeleton_bindpose` format:
+- Tagged animations are discovered by animation array index. `poseType` is a label, not an identifier.
+- The complete example uses `STEP` and a timestamp of `0` as convenient authoring choices, not conformance requirements.
+- Authoring tools may preview a tagged animation through ordinary core animation playback, but this extension does not prescribe how that preview is mixed with other animation sources.
+- Conversion from any previous bind-pose or matrix representation is format-specific and may involve non-TRS transforms or other information that this extension cannot represent. No general lossless conversion is defined here.
 
-1. **Extract pose data**: Convert model-space matrices to local-space TRS
-2. **Create animation**: Build a single-frame animation with the TRS values
-3. **Add extension**: Tag the animation with `KHR_character_reference_pose`
-4. **Remove old extension**: Delete `KHR_character_skeleton_bindpose` from skins
-
-### Conversion Formula
-
-For each joint `i` with global matrix `M_i` from the old format:
-
-1. Compute parent's global matrix `M_parent`
-2. Local matrix: `M_local = inverse(M_parent) * M_i`
-3. Decompose `M_local` into TRS components
-4. Store in animation channel outputs
-
-## Known Implementations
+## Known implementations (Informative)
 
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and Unity reference-pose demo.
 
