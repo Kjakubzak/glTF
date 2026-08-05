@@ -2,18 +2,22 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "KHR_character_expression glTF Document Extension",
     "type": "object",
-    "description": "glTF extension that provides a common interface for facial expression animations.",
+    "description": "Associates character-expression entries with animations used as normalized, stateless response curves.",
     "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
     "properties": {
         "expressions": {
             "type": "array",
-            "description": "Array of mappings between animation/channels and expression labels.",
+            "description": "Nonempty array of expression entries. Array indices are the authoritative entry identities; labels are not required to be unique.",
             "items": {
                 "type": "object",
+                "description": "One labeled expression driver and its response animation.",
+                "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
                 "properties": {
                     "expression": {
                         "type": "string",
-                        "description": "Expression name this animation contributes to."
+                        "minLength": 1,
+                        "description": "Nonempty descriptive label for this expression entry.",
+                        "gltf_detailedDescription": "This label is not required to be unique. Consumers MUST use the entry's array index, rather than assuming this value is unique, when an index-based extension refers to the entry."
                     },
                     "animation": {
                         "allOf": [
@@ -21,8 +25,8 @@
                                 "$ref": "glTFid.schema.json"
                             }
                         ],
-                        "description": "Index into the glTF animations array representing an expression animation.",
-                        "gltf_detailedDescription": "This value MUST be a valid index into the `animations` array."
+                        "description": "Index of the animation used as this entry's expression response curve.",
+                        "gltf_detailedDescription": "This value MUST be a valid index into the top-level `animations` array. Every channel of that animation participates in the base expression evaluator."
                     },
                     "extensions": { },
                     "extras": { }

@@ -16,38 +16,31 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
-Requires the extension(s): `KHR_character`, `KHR_character_expression`
-Used in conjunction with: `KHR_character_expression_mapping`
 
-Assets using `KHR_character_expression_morphtarget` MUST list `KHR_character_expression_morphtarget`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_morphtarget` object MUST be attached to an expression entry in that top-level expression object.
+Requires the extensions: `KHR_character` and `KHR_character_expression`.
 
-Selected channels MAY use an ordinary animation target with `path` set to `"weights"`, or a `KHR_animation_pointer` target that resolves to `/nodes/{}/weights` or `/nodes/{}/weights/{}`. Only assets using the pointer form MUST list `KHR_animation_pointer` in `extensionsUsed` and contain the corresponding `KHR_animation_pointer` target extension object.
+Assets using `KHR_character_expression_morphtarget` **MUST** list `KHR_character_expression_morphtarget`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They **MUST** contain the top-level `KHR_character` and `KHR_character_expression` extension objects. A `KHR_character_expression_morphtarget` object **MUST** be attached to an expression entry in that top-level `KHR_character_expression` object.
 
-## Overview
+A selected channel may use `KHR_animation_pointer` as described below. Only an asset using that form is required to declare and use `KHR_animation_pointer`; it is not an unconditional dependency of this extension.
 
-The `KHR_character_expression_morphtarget` extension provides semantic bindings between character expressions and specific morph target indices in a glTF mesh. These mappings enable higher-level expression control systems to reference the correct blendshapes when driving facial animation using glTF animation channels.
+An asset MAY list `KHR_character_expression_morphtarget` in `extensionsRequired`. A consumer claiming support for this extension MUST recognize and validate its morph-weight channel classifications. Support for an optional `KHR_animation_pointer` target remains an independent capability and does not change the base evaluator's timing.
 
-This extension does **not** define animation data itself. Instead, it enables consistent reference of morph target indices across tools, runtimes, and expressions.
+## Overview (Informative)
 
-## Reference Expression Categories/Vocabularies
+This extension classifies selected channels of an expression animation as node morph-weight channels. It adds validation metadata only. It does not create a separate morph-target binding, select channels for expression evaluation, change their samples, or define a property-composition policy.
 
-Expressions in this context describe face-localized animations used to drive small and/or larger movements across the face and/or down-chain meshes needed for reasonable conveyance of emotion/intent.
+The base `KHR_character_expression` extension evaluates every channel in the selected animation whether or not the channel is listed here.
 
-For examples of relevant types of expressions, you can reference concepts such as:
+## Extension schema (Normative)
 
-- **Emotions** (Emotion-derived facial movements such as what [VRM defines as presets](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/expressions.md), e.g. `happy`, `angry`, `surprised`)
-- **Visemes** (A visual representations of mouth movements for parts of speech, e.g. `aa`, `oo`, `th`)
-- **FACS** ([Facial Action Coding System (FACS)](https://en.wikipedia.org/wiki/Facial_Action_Coding_System) which is a system intended to describe visually distinguishable facial movements (and is often split further based on left/right), e.g. `brow lowerer`, `chin raiser`, `lid droop`)
-- **Gestures and Actions** (Larger descriptors that describe general facial actionse (but not emotion), e.g. `blink`, `smile`, `jawOpen`)
-
-Optionally, these expressions may be aligned with industry standards (or an endpoint/experiences expected expressions set).
-
-## Extension Schema
-
-The following is a partial extension fragment. Dependency declarations, the character objects, and the referenced animations are omitted.
+The following is a partial extension fragment. Dependency declarations, character objects, animations, accessors, and buffers are omitted.
 
 ```json
 {
@@ -59,16 +52,7 @@ The following is a partial extension fragment. Dependency declarations, the char
           "animation": 0,
           "extensions": {
             "KHR_character_expression_morphtarget": {
-              "channels": [0]
-            }
-          }
-        },
-        {
-          "expression": "frown",
-          "animation": 1,
-          "extensions": {
-            "KHR_character_expression_morphtarget": {
-              "channels": [0]
+              "channels": [0, 1]
             }
           }
         }
@@ -80,285 +64,71 @@ The following is a partial extension fragment. Dependency declarations, the char
 
 ### Properties
 
-| Property   | Type  | Description |
-| ---------- | ----- | ----------- |
-| `channels` | array | Nonempty array of unique indices into the `channels` array of the animation selected by the containing expression entry. Each selected channel MUST target morph weights using one of the forms described below. |
+| Property | Type | Description |
+| --- | --- | --- |
+| `channels` | array | Nonempty array of unique channel indices in the animation selected by the containing expression entry. |
 
-## Animation Integration (Expressions Tab Recommendation)
+## Channel classification and validity (Normative)
 
-This extension **does not animate morph targets directly**. It provides metadata only.
+Each value in `channels` **MUST** be a valid index into the `channels` array of the animation selected by the containing expression entry's `animation` property.
 
-Morph target expressions can be driven using standard glTF animation channels targeting the `weights` path on the corresponding node:
+Each selected channel **MUST** target morph weights through one of these forms:
+
+1. An ordinary core target with a defined `target.node` and `target.path` equal to `"weights"`.
+2. A valid `KHR_animation_pointer` target resolving to the complete `/nodes/{node}/weights` property or to one element `/nodes/{node}/weights/{weight}` of that property.
+
+For either form, `{node}` **MUST** identify a node with a defined, valid `mesh` reference, and that mesh **MUST** contain one or more morph targets. For the element form, `{weight}` **MUST** be a valid morph-target index. Core glTF requires all primitives of the mesh to contain the same number `N` of morph targets in the same order.
+
+The selected channel and its sampler **MUST** satisfy all core animation rules, any `KHR_animation_pointer` rules, and all `KHR_character_expression` rules. In particular:
+
+- an ordinary core `weights` output accessor has `SCALAR` type and a component type permitted by core animation;
+- for a complete weights target, each key contains exactly `N` scalar weights;
+- for an individual pointer target, each key contains exactly one scalar weight;
+- an output accessor for `LINEAR` or `STEP` therefore has `input.count * N` elements for a complete weights target and `input.count` elements for an individual target; and
+- `CUBICSPLINE` has three times the corresponding element count, ordered under the core morph-weight tangent/value rules.
+
+The initial complete weight vector is resolved by `KHR_character_expression`: `node.weights`, then `mesh.weights`, then `N` zeros. An individual pointer target compares against the corresponding element of that vector.
+
+Listing a channel here does not filter, weight, remap, or otherwise modify the response record produced by the base expression evaluator. Lack of support for this optional classifier does not suppress the underlying channel. Support for `KHR_animation_pointer` remains independently necessary to emit a response for the pointer form. The cross-classifier overlap prohibition is defined by `KHR_character_expression`.
+
+## Partial animation examples (Informative)
+
+The ordinary core form identifies the complete weight vector:
 
 ```json
 {
-  "animations": [
-    {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "node": 0,
-            "path": "weights"
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "LINEAR"
-        }
-      ]
-    }
-  ]
+  "sampler": 0,
+  "target": {
+    "node": 0,
+    "path": "weights"
+  }
 }
 ```
 
-- Use `"interpolation": "STEP"` for binary/toggle expressions like `blink`.
-- Each element of the `weights` array corresponds to one morph target on the associated mesh primitive.
-- Expression systems should coordinate with these indices using the bindings declared by this extension.
-
-### Integration with KHR_animation_pointer
-
-For animation control of all weights or an individual morph target weight, assets may use the [`KHR_animation_pointer`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_animation_pointer) extension. This is an alternative to the ordinary `weights` target, not an unconditional dependency.
-
-As defined in the [glTF Object Model](https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/ObjectModel.adoc#core-pointers), the following pointer templates are supported for morph target weights:
-
-| Pointer | Type | Description |
-| ------- | ---- | ----------- |
-| `/nodes/{}/weights` | `float[]` | Animate all morph target weights on a node simultaneously |
-| `/nodes/{}/weights/{}` | `float` | Animate a specific morph target weight by index |
-
-Where `{}` is replaced with the corresponding array element index (e.g., `/nodes/0/weights` or `/nodes/0/weights/2`).
-
-### Example: Animating All Weights on a Node
-
-This example animates all morph target weights on a node using the `/nodes/i/weights` pointer:
+The pointer form may identify one weight:
 
 ```json
 {
-  "animations": [
-    {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/nodes/0/weights"
-              }
-            }
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "LINEAR"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Example: Animating a Specific Weight Index
-
-For more granular control, you can animate individual morph target weights using the `/nodes/i/weights/j` pointer. This is particularly useful when you want to animate a single expression without affecting other morph targets:
-
-```json
-{
-  "animations": [
-    {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/nodes/0/weights/2"
-              }
-            }
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "STEP"
-        }
-      ]
-    }
-  ]
-}
-```
-
-In this example, only the morph target at index 2 (e.g., `blinkLeft`) is animated, while other weights remain unchanged.
-
-### Example: Animating Multiple Specific Weights
-
-To animate multiple specific morph targets independently (e.g., left and right blinks with different timing):
-
-```json
-{
-  "animations": [
-    {
-      "name": "blink",
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/nodes/0/weights/2"
-              }
-            }
-          }
-        },
-        {
-          "sampler": 1,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/nodes/0/weights/3"
-              }
-            }
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "STEP"
-        },
-        {
-          "input": 2,
-          "output": 3,
-          "interpolation": "STEP"
-        }
-      ]
-    }
-  ]
-}
-```
-
-This allows `blinkLeft` (weight index 2) and `blinkRight` (weight index 3) to be animated with different timing samplers.
-
-This method ensures consistent and interoperable animation targeting for morph target-based expressions across glTF runtimes.
-
-## Example: Expression with glTF Animation
-
-### Step 1: Bind Expression to Morph Target
-
-```json
-{
-  "extensions": {
-    "KHR_character_expression": {
-      "expressions": [
-        {
-          "expression": "smile",
-          "animation": 0,
-          "extensions": {
-            "KHR_character_expression_morphtarget": {
-              "channels": [0]
-            }
-          }
-        },
-        {
-          "expression": "frown",
-          "animation": 1,
-          "extensions": {
-            "KHR_character_expression_morphtarget": {
-              "channels": [0]
-            }
-          }
-        }
-      ]
+  "sampler": 0,
+  "target": {
+    "path": "pointer",
+    "extensions": {
+      "KHR_animation_pointer": {
+        "pointer": "/nodes/0/weights/2"
+      }
     }
   }
 }
 ```
 
-This binds morph target index 2 on mesh 0, primitive 0, to the expression `"blinkLeft"`.
+These are partial channel fragments, not complete glTF assets. Their samplers, accessors, buffers, dependency declarations, and matching authored initial values are omitted.
 
-### Step 2: Animate the Morph Target via Node Weights
-
-```json
-{
-  "nodes": [
-    {
-      "mesh": 0,
-      "weights": [0.0, 0.0, 0.0]
-    }
-  ],
-  "animations": [
-    {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "node": 0,
-            "path": "weights"
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "STEP"
-        }
-      ]
-    }
-  ]
-}
-```
-
-The animation should update the relevant morph target weight (in this case index 2) between `0.0` and `1.0` to control the `"blinkLeft"` expression. The usage of `STEP` interpolation ensures clean toggles between on/off states.
-
-## Implementation Notes
-
-- This extension provides a consistent mapping between expression names and mesh targets, allowing glTF animation data to be expressive-aware.
-- Multiple morph targets can be bound to the same expression.
-- Tools may use this metadata to validate expression sets, retarget character blendshape names, or drive runtime animation.
-
-### Blending Behavior
-
-When blending morph target weights from multiple sources (e.g., layered animations or runtime overrides), implementations **SHOULD** use traditional linear interpolation (lerp):
-
-```text
-result = lerp(base_value, blend_value, blend_weight)
-       = base_value + blend_weight * (blend_value - base_value)
-```
-
-### Recommended Interpolation for Binary Expressions
-
-For expressions that represent binary or toggle states (such as eye blinks, mouth open/close states, or other on/off expressions), the use of glTF animation channels with `"interpolation": "STEP"` is strongly recommended.
-
-Using STEP interpolation ensures that the expression toggles cleanly between fully off (0) and fully on (1) states, providing crisp transitions and avoiding unintended interpolation artifacts.
-
-All expression-driven changes defined by this extension should rely on standard glTF animation mechanisms as described in the Khronos [Expressions Tab](https://docs.google.com/document/d/1ALRCPbXqQuWZvA9Sm2TsBFuW75h-of_lfD6sN7QwFU0/edit?pli=1&tab=t.x433oui5434f).
-
-- Expression timing, blending, and control must use glTF `animations` channels.
-- Animations targeting expression-driven `weights` (for morphtargets)
-- This ensures consistency, ease of implementation, and interoperability across runtimes.
-
-This approach simplifies character implementation by centralizing expression playback in the glTF animation system, reducing custom handling and improving cross-platform compatibility.
-
-## Known Implementations
+## Known implementations (Informative)
 
 - [0b5vr/khr-character-testbed](https://github.com/0b5vr/khr-character-testbed) - Three.js loader and VRM conversion tooling.
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and Unity demos.
 
 ## License
 
-This extension specification is licensed under the Khronos Group Extension License.
+This extension is licensed under the Khronos Group Extension License.
 See: https://www.khronos.org/registry/gltf/license.html

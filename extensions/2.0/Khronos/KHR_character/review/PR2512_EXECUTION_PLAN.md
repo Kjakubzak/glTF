@@ -138,10 +138,10 @@ The Working Group should record one resolution for each row. The recommendation 
 ### Normative work for the recommended global-phase package
 
 - [ ] Define each expression entry as a stateless response with a current host-supplied driver whose conceptual default is `0`.
-- [ ] Define missing/NaN as `0`, negative values and negative infinity as `0`, and values above `1` and positive infinity as `1`.
+- [ ] Require a supplied driver to be finite, use `0` when no driver is supplied, and clamp finite values to `[0, 1]`.
 - [ ] Keep driver acquisition, arbitration, smoothing, cadence, and final nonzero mixing host-defined.
 - [ ] Let `C` be every channel in the referenced response animation.
-- [ ] Define `T` as the maximum input-accessor `max` among all samplers referenced by `C`, excluding truly unused samplers.
+- [ ] Define `T` as the maximum final decoded input key among all samplers referenced by `C`, excluding truly unused samplers; accessor metadata alone does not establish this value.
 - [ ] Require `T > 0`; sample supported channels at common time `t=e*T` using core interpolation and endpoint clamping.
 - [ ] Keep unsupported optional target samplers in `T`; reject missing required support.
 - [ ] Return ordinary absolute core samples before host mixing.

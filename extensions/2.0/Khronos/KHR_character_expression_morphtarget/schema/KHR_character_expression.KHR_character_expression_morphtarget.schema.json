@@ -2,20 +2,20 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "KHR_character_expression_morphtarget KHR_character_expression Extension",
     "type": "object",
-    "description": "glTF extension that extends KHR_character_expression to specify morph target-based expression animations.",
+    "description": "Classifies selected expression-animation channels as node morph-weight channels.",
     "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
     "properties": {
         "channels": {
             "type": "array",
-            "description": "Array of animation channel indices that drive morph target-based expressions.",
+            "description": "Nonempty array of unique indices classifying node morph-weight channels. Classification does not select or filter channels for base expression evaluation.",
             "items": {
                 "allOf": [
                     {
                         "$ref": "glTFid.schema.json"
                     }
                 ],
-                "description": "Index of an animation channel in the expression's selected animation.",
-                "gltf_detailedDescription": "This value MUST be a valid index into the `channels` array of the animation selected by the containing expression entry's `animation` property."
+                "description": "Index of a classified channel in the expression entry's selected animation.",
+                "gltf_detailedDescription": "This value MUST be a valid index into the `channels` array of the animation selected by the containing expression entry's `animation` property. The channel MUST target node morph weights through an ordinary core weights target or a valid KHR_animation_pointer node-weights target."
             },
             "minItems": 1,
             "uniqueItems": true

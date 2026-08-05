@@ -16,36 +16,29 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
-Requires the extension(s): `KHR_character`, `KHR_character_expression`
-Typically used in conjunction with: `KHR_character_expression_mapping`
 
-Assets using `KHR_character_expression_joint` MUST list `KHR_character_expression_joint`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_joint` object MUST be attached to an expression entry in that top-level expression object.
+Requires the extensions: `KHR_character` and `KHR_character_expression`.
 
-## Overview
+Assets using `KHR_character_expression_joint` **MUST** list `KHR_character_expression_joint`, `KHR_character_expression`, and `KHR_character` in `extensionsUsed`. They **MUST** contain the top-level `KHR_character` and `KHR_character_expression` extension objects. A `KHR_character_expression_joint` object **MUST** be attached to an expression entry in that top-level `KHR_character_expression` object.
 
-The `KHR_character_expression_joint` extension provides a semantic mapping between facial expression names and joint-based animations. It enables tools and runtimes to associate expressions like `blink`, `smile`, or `jawOpen` with specific nodes whose transforms are animated using standard glTF animation channels.
+An asset MAY list `KHR_character_expression_joint` in `extensionsRequired`. A consumer claiming support for this extension MUST recognize and validate its node-TRS channel classifications. This support does not change or filter the base response evaluator.
 
-This extension is purely descriptive: it does not define or store animation data itself.
+## Overview (Informative)
 
-## Reference Expression Categories/Vocabularies
+This extension classifies selected channels of an expression animation as node-TRS channels. It adds validation metadata only. It does not select channels for expression evaluation, change their samples, require the targeted nodes to be skin joints, or define a property-composition policy.
 
-Expressions in this context describe face-localized animations used to drive small and/or larger movements across the face and/or down-chain meshes needed for reasonable conveyance of emotion/intent.
+The base `KHR_character_expression` extension evaluates every channel in the selected animation whether or not the channel is listed here.
 
-For examples of relevant types of expressions, you can reference concepts such as:
+## Extension schema (Normative)
 
-- **Emotions** (Emotion-derived facial movements such as what [VRM defines as presets](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/expressions.md), e.g. `happy`, `angry`, `surprised`)
-- **Visemes** (A visual representations of mouth movements for parts of speech, e.g. `aa`, `oo`, `th`)
-- **FACS** ([Facial Action Coding System (FACS)](https://en.wikipedia.org/wiki/Facial_Action_Coding_System) which is a system intended to describe visually distinguishable facial movements (and is often split further based on left/right), e.g. `brow lowerer`, `chin raiser`, `lid droop`)
-- **Gestures and Actions** (Larger descriptors that describe general facial actionse (but not emotion), e.g. `blink`, `smile`, `jawOpen`)
-
-Optionally, these expressions may be aligned with industry standards (or an endpoint/experiences expected expressions set).
-
-## Extension Schema
-
-The following is a partial extension fragment. Dependency declarations, the character objects, and the referenced animations are omitted.
+The following is a partial extension fragment. Dependency declarations, character objects, accessors, buffers, and the referenced animation are omitted.
 
 ```json
 {
@@ -60,15 +53,6 @@ The following is a partial extension fragment. Dependency declarations, the char
               "channels": [0, 1, 2]
             }
           }
-        },
-        {
-          "expression": "frown",
-          "animation": 1,
-          "extensions": {
-            "KHR_character_expression_joint": {
-              "channels": [0, 1]
-            }
-          }
         }
       ]
     }
@@ -78,61 +62,32 @@ The following is a partial extension fragment. Dependency declarations, the char
 
 ### Properties
 
-| Property   | Type  | Description                                                                                                                        |
-| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `channels` | array | Nonempty array of unique indices into the `channels` array of the animation selected by the containing expression entry. Each selected channel MUST target `"rotation"`, `"translation"`, or `"scale"`. |
+| Property | Type | Description |
+| --- | --- | --- |
+| `channels` | array | Nonempty array of unique channel indices in the animation selected by the containing expression entry. |
 
-## Animation Integration
+## Channel classification and validity (Normative)
 
-- Expression timing, blending, and control must use glTF `animations` channels.
-- Animations targeting expression-driven `rotation`, `translation`, or `scale` must conform to glTF 2.0's animation model.
-- This ensures consistency, ease of implementation, and interoperability across runtimes.
+Each value in `channels` **MUST** be a valid index into the `channels` array of the animation selected by the containing expression entry's `animation` property.
 
-Each animation channel used to drive an expression should operate within a **normalized 0-to-1 range**, where:
+Each selected channel **MUST** use an ordinary core animation target with:
 
-- `0.0` indicates the expression is fully inactive.
-- `1.0` indicates the expression is fully active.
+- a defined, valid `target.node`; and
+- `target.path` equal to `"translation"`, `"rotation"`, or `"scale"`.
 
-The transformation values themselves (e.g., degree of rotation or distance of translation) should scale proportionally with the normalized input range.
+An extension-defined target, including an equivalent-looking `KHR_animation_pointer` target, does not satisfy this classifier. The targeted node **MUST NOT** define `matrix`, because core glTF prohibits animating TRS properties of a node that supplies its transform with `matrix`.
 
-This approach simplifies character implementation by centralizing expression playback in the glTF animation system and unifying runtime logic for blending and prioritization.
+The target node is not required to occur in any `skin.joints` array and is not required to influence a skinned mesh. The word “joint” in this extension's name is a classification label, not an additional skin-membership constraint.
 
-### Recommended Interpolation for Binary Expressions
+The selected channel and its sampler **MUST** satisfy all core animation rules and all `KHR_character_expression` rules. In particular:
 
-For expressions that represent binary or toggle states (such as `blinkLeft`, `blinkRight`, or `jawOpen`), the use of glTF animation channels with `"interpolation": "STEP"` is strongly recommended.
+- translation and scale outputs use the core `VEC3` representation;
+- rotation outputs use the core quaternion `VEC4` representation and quaternion validity rules; and
+- each output contains one logical value per input key for `LINEAR` or `STEP`, or three logical records per input key for `CUBICSPLINE`.
 
-STEP interpolation ensures that an expression toggles cleanly between fully off (`0.0`) and fully on (`1.0`) states, providing crisp visual transitions and avoiding interpolation artifacts that could occur with `LINEAR` interpolation in binary scenarios.
+Listing a channel here does not filter, weight, retarget, or otherwise modify the response record produced by the base expression evaluator. Lack of support for this optional classifier does not suppress the underlying core channel. The cross-classifier overlap prohibition is defined by `KHR_character_expression`.
 
-## Implementation Notes
-
-- Multiple joints may be assigned to the same expression.
-- Expression states should be normalized to the [0.0–1.0] range for consistent runtime interpretation.
-- This extension does not conflict with standard rigging or skinning systems.
-
-### Blending Behavior
-
-When blending joint transforms from multiple sources (e.g., layered animations or runtime overrides), implementations **SHOULD** use the following approaches:
-
-**For translation and scale values**, use traditional linear interpolation (lerp):
-
-```text
-result = lerp(base_value, blend_value, blend_weight)
-       = base_value + blend_weight * (blend_value - base_value)
-```
-
-**For rotation values** (quaternions), use the logarithmic (log/exp) approach to ensure smooth, geodesic interpolation on the rotation manifold:
-
-```text
-result = exp(lerp(log(base_rotation), log(blend_rotation), blend_weight))
-```
-
-This approach:
-
-- Provides the shortest-path interpolation between rotations
-- Avoids issues with gimbal lock present in Euler angle representations
-- Produces more natural blending for skeletal animations, especially for large rotation differences
-
-## Known Implementations
+## Known implementations (Informative)
 
 - [0b5vr/khr-character-testbed](https://github.com/0b5vr/khr-character-testbed) - Three.js loader and VRM conversion tooling.
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and Unity demos.

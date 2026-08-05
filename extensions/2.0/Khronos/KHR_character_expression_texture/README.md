@@ -16,37 +16,31 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
-Requires the extension(s): `KHR_character`, `KHR_character_expression`, `KHR_animation_pointer`, `KHR_texture_transform`
-Can be used alongside: `KHR_character_expression_mapping`
 
-Assets using `KHR_character_expression_texture` MUST list `KHR_character_expression_texture`, `KHR_character_expression`, `KHR_character`, `KHR_animation_pointer`, and `KHR_texture_transform` in `extensionsUsed`. They MUST contain the top-level `KHR_character` and `KHR_character_expression` extension objects. The `KHR_character_expression_texture` object MUST be attached to an expression entry, every selected animation channel MUST contain a `KHR_animation_pointer` target extension object, and every pointer MUST resolve to the `offset`, `scale`, or `rotation` property of an actual `KHR_texture_transform` extension object.
+Requires the extensions: `KHR_character`, `KHR_character_expression`, `KHR_animation_pointer`, and `KHR_texture_transform`.
 
-## Overview
+Assets using `KHR_character_expression_texture` **MUST** list all five extensions in `extensionsUsed`. They **MUST** contain the top-level `KHR_character` and `KHR_character_expression` extension objects. A `KHR_character_expression_texture` object **MUST** be attached to an expression entry in that top-level `KHR_character_expression` object.
 
-The `KHR_character_expression_texture` extension enables expression-level control using UV transformations. This approach is beneficial for characters that represent expressions visually using texture atlases, such as cartoon or anime-style characters.
+Every selected channel uses `KHR_animation_pointer` to target a property of an authored `KHR_texture_transform` object as described below.
 
-- Expression timing, blending, and control must use glTF `animations` channels.
-- Animations targeting expression-driven texture transforms must adhere strictly to glTF animation standards and `KHR_animation_pointer` semantics.
+An asset MAY list `KHR_character_expression_texture` in `extensionsRequired`. A consumer claiming support for this extension MUST recognize and validate its texture-transform channel classifications. Emitting response records for those channels also requires support for the independently declared `KHR_animation_pointer` and `KHR_texture_transform` targets.
 
-## Reference Expression Vocabulary
+## Overview (Informative)
 
-Expressions in this context describe face-localized animations used to drive small and/or larger movements across the face and/or down-chain meshes needed for reasonable conveyance of emotion/intent.
+This extension classifies selected channels of an expression animation as texture-transform channels. It adds validation metadata only. It does not bind an expression to a texture or texture index, select channels for expression evaluation, change their samples, or define a property-composition policy.
 
-For examples of relevant types of expressions, you can reference concepts such as:
+The concrete target is supplied entirely by the selected channel's `KHR_animation_pointer` pointer. The base `KHR_character_expression` extension evaluates every channel in the selected animation whether or not the channel is listed here.
 
-- **Emotions** (Emotion-derived facial movements such as what [VRM defines as presets](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_vrm-1.0/expressions.md), e.g. `happy`, `angry`, `surprised`)
-- **Visemes** (A visual representations of mouth movements for parts of speech, e.g. `aa`, `oo`, `th`)
-- **FACS** ([Facial Action Coding System (FACS)](https://en.wikipedia.org/wiki/Facial_Action_Coding_System) which is a system intended to describe visually distinguishable facial movements (and is often split further based on left/right), e.g. `brow lowerer`, `chin raiser`, `lid droop`)
-- **Gestures and Actions** (Larger descriptors that describe general facial actionse (but not emotion), e.g. `blink`, `smile`, `jawOpen`)
+## Extension schema (Normative)
 
-Optionally, these expressions may be aligned with industry standards (or an endpoint/experiences expected expressions set).
-
-## Extension Schema
-
-The following is a partial extension fragment. Dependency declarations, the character objects, texture-transform objects, and referenced animations are omitted.
+The following is a partial extension fragment. Dependency declarations, character objects, materials, texture-transform objects, animations, accessors, and buffers are omitted.
 
 ```json
 {
@@ -56,15 +50,6 @@ The following is a partial extension fragment. Dependency declarations, the char
         {
           "expression": "happy",
           "animation": 0,
-          "extensions": {
-            "KHR_character_expression_texture": {
-              "channels": [0]
-            }
-          }
-        },
-        {
-          "expression": "angry",
-          "animation": 1,
           "extensions": {
             "KHR_character_expression_texture": {
               "channels": [0, 1]
@@ -80,197 +65,59 @@ The following is a partial extension fragment. Dependency declarations, the char
 ### Properties
 
 | Property | Type | Description |
-| -------- | ---- | ----------- |
-| `channels` | array | Array representing the target channels that are texture transform-based. |
+| --- | --- | --- |
+| `channels` | array | Nonempty array of unique channel indices in the animation selected by the containing expression entry. |
 
-### textureTransform properties
+## Channel classification and validity (Normative)
 
-| Property | Type     | Description                          |
-| -------- | -------- | ------------------------------------ |
-| `offset` | float[2] | UV offset for texture placement.     |
-| `scale`  | float[2] | UV scale for texture transformation. |
-| `rotation` | float | UV rotation in radians. |
+Each value in `channels` **MUST** be a valid index into the `channels` array of the animation selected by the containing expression entry's `animation` property.
 
-### Integration with KHR_animation_pointer
+Each selected channel **MUST** have:
 
-Texture transformation animations use the [`KHR_animation_pointer`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_animation_pointer) extension. This provides a standardized mechanism for animating `KHR_texture_transform` properties via JSON pointers.
+- `target.path` equal to `"pointer"`;
+- no `target.node`; and
+- a valid `KHR_animation_pointer` target whose pointer resolves to the `offset`, `scale`, or `rotation` property of a `KHR_texture_transform` extension object actually authored in the asset.
 
-This method ensures consistent and interoperable animation targeting for texture-based expressions across glTF runtimes.
+It is not sufficient for the pointed-to property to have the same shape or name elsewhere. The owning object **MUST** be an actual `KHR_texture_transform` object attached at a location allowed by that extension.
 
-## UV Transformations
+The selected channel and its sampler **MUST** satisfy all core animation, `KHR_animation_pointer`, `KHR_texture_transform`, and `KHR_character_expression` rules. In particular:
 
-UV manipulations (offset, scale, rotation) require the widely adopted [`KHR_texture_transform`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_texture_transform) extension.
+| Target property | AOM value | Output accessor type |
+| --- | --- | --- |
+| `offset` | two floating-point components | `VEC2` |
+| `scale` | two floating-point components | `VEC2` |
+| `rotation` | one floating-point component in radians | `SCALAR` |
 
-- Animate properties within `KHR_texture_transform` using `KHR_animation_pointer`.
-- Ensure these transforms are included explicitly in the glTF material definitions to enable animations.
+The output contains one logical value per input key for `LINEAR` or `STEP`, and three logical records per input key for `CUBICSPLINE`. Its component type and values **MUST** satisfy `KHR_animation_pointer` and the target property's constraints.
 
-### Example Animation Setup using KHR_animation_pointer
+The authored initial values are the explicitly authored property values when present. Within an authored `KHR_texture_transform` object, omitted `offset`, `scale`, and `rotation` resolve to `[0, 0]`, `[1, 1]`, and `0`, respectively, as defined by `KHR_texture_transform`.
 
-```json
-{
-  "animations": [
-    {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/materials/2/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale"
-              }
-            }
-          }
-        },
-        {
-          "sampler": 1,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/materials/3/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/offset"
-              }
-            }
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "STEP"
-        },
-        {
-          "input": 2,
-          "output": 3,
-          "interpolation": "LINEAR"
-        }
-      ]
-    }
-  ]
-}
-```
+Listing a channel here does not filter, bind, or otherwise modify the response record produced by the base expression evaluator. Lack of support for this optional classifier does not suppress the underlying channel; support for its independently declared target extensions remains necessary to emit that channel's response. The cross-classifier overlap prohibition is defined by `KHR_character_expression`.
 
-This clearly separates semantic bindings (the domain of this extension) from runtime animation states (handled by standard glTF animation mechanisms).
-
-### Recommended Interpolation for Binary Expressions
-
-For expressions that represent binary or toggle states (such as eye blinks, mouth open/close states, or other on/off expressions), the use of glTF animation channels with `"interpolation": "STEP"` is strongly recommended.
-
-Using STEP interpolation ensures that the expression toggles cleanly between fully off (0) and fully on (1) states, providing crisp transitions and avoiding unintended interpolation artifacts.
-
-## Example: Expression with glTF Animation
-
-### Step 1: Bind Expressions to Materials
+## Partial animation-channel example (Informative)
 
 ```json
 {
-  "extensions": {
-    "KHR_character_expression": {
-      "expressions": [
-        {
-          "expression": "happy",
-          "animation": 0,
-          "extensions": {
-            "KHR_character_expression_texture": {
-              "channels": [0, 1]
-            }
-          }
-        },
-        {
-          "expression": "angry",
-          "animation": 1,
-          "extensions": {
-            "KHR_character_expression_texture": {
-              "channels": [0, 1]
-            }
-          }
-        }
-      ]
+  "sampler": 0,
+  "target": {
+    "path": "pointer",
+    "extensions": {
+      "KHR_animation_pointer": {
+        "pointer": "/materials/2/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale"
+      }
     }
   }
 }
 ```
 
-This associates the listed texture-transform animation channels with the `"happy"` and `"angry"` expressions.
+This is a partial channel fragment, not a complete glTF asset. In a valid asset, the pointed-to `KHR_texture_transform` object is authored at that location and the omitted sampler, accessors, buffers, dependency declarations, and initial-value match satisfy their respective specifications.
 
-### Step 2: Animate Texture Properties Using KHR_animation_pointer
-
-Animation of texture-transform properties must be implemented using `KHR_animation_pointer`.
-
-```json
-{
-  "animations": [
-    {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/materials/2/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/scale"
-              }
-            }
-          }
-        },
-        {
-          "sampler": 1,
-          "target": {
-            "path": "pointer",
-            "extensions": {
-              "KHR_animation_pointer": {
-                "pointer": "/materials/3/pbrMetallicRoughness/baseColorTexture/extensions/KHR_texture_transform/offset"
-              }
-            }
-          }
-        }
-      ],
-      "samplers": [
-        {
-          "input": 0,
-          "output": 1,
-          "interpolation": "STEP"
-        },
-        {
-          "input": 2,
-          "output": 3,
-          "interpolation": "LINEAR"
-        }
-      ]
-    }
-  ]
-}
-```
-
-## Implementation Notes
-
-- Use this extension when morph targets or joint animations alone are insufficient or stylistically undesirable for expressions.
-- Expression-driven UV transformations are typically applied to materials on facial regions, such as eyes or mouth.
-- This extension does not define animation sequences, only the semantic binding between expressions and texture transforms.
-- The `STEP` interpolation may be used for binary changes between regions of a texture atlas.
-- The `LINEAR` interpolation may be used for UV offset transitions or subtle animations.
-
-### Blending Behavior
-
-When blending UV transform values (offset, scale) from multiple sources (e.g., layered animations or runtime overrides), implementations **SHOULD** use traditional linear interpolation (lerp):
-
-```text
-result = lerp(base_value, blend_value, blend_weight)
-       = base_value + blend_weight * (blend_value - base_value)
-```
-
-### Runtime Behavior
-
-- Expression weights should animate between `0.0` (off) and `1.0` (fully active).
-- The character system uses these animations to transform texture coordinates in accordance with semantic expressions.
-
-## Known Implementations
+## Known implementations (Informative)
 
 - [0b5vr/khr-character-testbed](https://github.com/0b5vr/khr-character-testbed) - Three.js loader and VRM conversion tooling.
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and Unity demos.
 
 ## License
 
-This extension specification is licensed under the Khronos Group Extension License.
+This extension is licensed under the Khronos Group Extension License.
 See: https://www.khronos.org/registry/gltf/license.html
