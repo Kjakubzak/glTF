@@ -2,13 +2,13 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "KHR_character glTF Document Extension",
     "type": "object",
-    "description": "glTF extension for character-specific metadata and properties.",
+    "description": "Provides one author-selected character designation for a glTF asset and identifies its root node.",
     "allOf": [ { "$ref": "glTFProperty.schema.json" } ],
     "properties": {
         "rootNode": {
             "allOf": [{ "$ref": "glTFid.schema.json" }],
-            "description": "Index of the glTF node representing the root of the character hierarchy. This node SHOULD be a common ancestor of all nodes containing character-related meshes and joints.",
-            "gltf_detailedDescription": "This value MUST be a valid index into the `nodes` array."
+            "description": "Index of the glTF node designated as the character root.",
+            "gltf_detailedDescription": "This value MUST be a valid index into the `nodes` array. It does not assert scene membership, skin ownership, skeleton membership, or that every character-related node is its descendant."
         },
         "extensions": { },
         "extras": { }

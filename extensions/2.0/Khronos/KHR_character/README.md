@@ -16,26 +16,49 @@
 
 **Draft** – This extension is not yet ratified by the Khronos Group and is subject to change.
 
+## Conventions
+
+The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **NOT RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in [BCP 14](https://www.rfc-editor.org/info/bcp14) when, and only when, they appear in all capitals, as shown here.
+
 ## Dependencies
 
 Written against the glTF 2.0 specification.
 
 This extension has no extension dependencies.
 
-## Overview
+## Overview (Informative)
 
-The `KHR_character` extension designates a glTF asset as representing a character. This top-level marker enables tools and runtimes to interpret the asset as containing character-specific content such as rigging, blendshapes, animation retargeting, or metadata.
+The `KHR_character` extension provides one author-selected character designation for a glTF asset. It provides a common discovery point for independently defined character-related extensions.
 
-This extension does not define character features directly but acts as a root declaration that character-related extensions may be present, and that consumers should treat the asset using character-specific logic and pipelines. It's part of the wider set of KHR character extensions that are meant to be building blocks to represent a contract stating functionality and data requirements between a given model and an endpoint.
+This extension does not define rigging, expressions, retargeting, metadata, or runtime behavior. Those capabilities are defined, when present, by their respective extensions.
 
-The extension references the root `node` that represents the character. This glTF 2.0 version of the extension identifies one character per asset. Support for multiple independently addressable characters is deferred for consideration alongside glTF 2.1 support.
+Identifying additional independently addressable characters is outside the scope of this extension.
 
-Character metadata MAY be attached using `KHR_xmp_json_ld`; neither metadata nor XMP support is required by this extension.
+## Extension usage
 
-## Extension Schema
+The `KHR_character` object MUST be attached to the top-level glTF object. The asset MUST list `KHR_character` in `extensionsUsed` and MAY list it in `extensionsRequired` according to the rules of the glTF 2.0 specification.
+
+This extension provides exactly one character designation per asset. It neither prohibits unrelated or additional scene content nor identifies additional characters.
+
+The `rootNode` property MUST contain a valid index into the top-level `nodes` array. It designates the root node chosen by the author for the character. It does not assert scene membership, skin ownership, skeleton membership, or that every character-related node is its descendant.
+
+A consumer claiming support for this extension MUST recognize the `KHR_character` object and resolve `rootNode` to the designated node. The extension does not require traversal, rendering, animation, or other character-specific behavior. A consumer that cannot recognize and resolve the designation MUST treat an asset listing `KHR_character` in `extensionsRequired` as unsupported, according to the glTF 2.0 extension rules.
+
+## Extension schema
 
 ```json
 {
+  "asset": {
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "name": "characterRoot"
+    }
+  ],
+  "extensionsUsed": [
+    "KHR_character"
+  ],
   "extensions": {
     "KHR_character": {
       "rootNode": 0
@@ -48,9 +71,9 @@ Character metadata MAY be attached using `KHR_xmp_json_ld`; neither metadata nor
 
 | Property   | Type    | Description                                                                                                                                                                                  |
 | ---------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rootNode` | integer | Index of the glTF `node` representing the root of the character hierarchy. This node SHOULD be a common ancestor of all nodes containing character-related meshes and joints. |
+| `rootNode` | integer | Index of the glTF `node` designated as the character root. |
 
-## Non-Normative Metadata Guidance
+## Metadata guidance (Informative)
 
 This section is informative and does not define conformance requirements for `KHR_character`.
 
@@ -74,7 +97,7 @@ The following properties are examples that authoring pipelines may find useful. 
 | khr:version             | Character or asset version as a string.                                                                                                   |
 | khr:thumbnailImage      | Zero-based index of an image in the top-level glTF `images` array to use as a character thumbnail.                                        |
 
-## Example
+### Optional metadata example
 
 ```json
 {
@@ -148,12 +171,13 @@ The following properties are examples that authoring pipelines may find useful. 
 }
 ```
 
-## Implementation Notes
+## Implementation notes (Informative)
 
-- `rootNode` is required, representing the index of the glTF `node` that serves as the root of the character hierarchy. This node SHOULD be a common ancestor of all nodes containing character-related meshes and joints.
-- Consumers should use this marker as a signal to search for additional character-related extensions, including skeletal, expression, and other khronos character extensions.
+- `rootNode` provides a convenient starting point for character-oriented traversal, but consumers cannot infer relationships that are not represented by the node hierarchy or another extension.
+- Authors are encouraged to choose a node that is a common ancestor of character-related meshes and joints when the asset hierarchy permits it.
+- Consumers can use the marker as a signal to inspect `extensionsUsed` for independently defined character-related extensions.
 
-## Known Implementations
+## Known implementations (Informative)
 
 - [0b5vr/khr-character-testbed](https://github.com/0b5vr/khr-character-testbed) - Three.js viewer and VRM-to-KHR_character converter.
 - [Kjakubzak/khr_character_testbed](https://github.com/Kjakubzak/khr_character_testbed) - UnityGLTF importer, exporter, sample assets, and Unity demos.
