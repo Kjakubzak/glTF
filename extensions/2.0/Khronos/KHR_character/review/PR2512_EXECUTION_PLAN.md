@@ -470,12 +470,8 @@ Tasks:
 - [ ] Keep additive/override behavior in an explicitly host-specific mixer adapter.
 - [ ] Keep direct-native input separate from any selected mapping operation; do not silently merge surfaces.
 - [ ] Drive expression slots by authoritative array index, or prohibit duplicate labels normatively and validate them. Names must not silently collapse entries.
-- [ ] Reject an asset when an unsupported extension is listed in `extensionsRequired`; follow the frozen optional classifier/filter fallback otherwise.
+- [ ] Reject an asset when an unsupported extension is listed in `extensionsRequired`; typed children remain classifiers for optional use, and unsupported optional target extensions omit response records without filtering channels out of the common-duration calculation.
 - [ ] Preserve unknown mask tokens and companion vendor-extension payloads through round trips; evaluate unsupported types with the selected fallback, not `blend`.
-
-If per-sampler phase is selected, implement only `tau=first+e*(last-first)`, typed-child filtering and unsupported-child behavior, and the selected one-key `LINEAR` synthesis. Keep samples absolute before the host mixer. Never auto-detect global versus per-sampler from asset shape.
-
-If fixed-target weighting is selected, stop and redesign this evaluator around the frozen base/target contribution rules; do not reuse phase sampling implicitly.
 
 ### Converter
 
@@ -495,14 +491,13 @@ Tasks:
 - [ ] Migrate mapping bytes only if the frozen proposal changes them; never reinterpret or numerically invert the forward operation. Name native/endpoint sides unambiguously.
 - [ ] Treat VRM→multiplicative-mask conversion as lossy unless an exact profile exists; require explicit opt-in or a custom profile.
 - [ ] Synchronize public schema-derived types after proposal changes; add a generator before describing them as generated.
-- [ ] Under per-sampler phase, preserve the selected independent timestamp/filter/one-key rules; under fixed-target weighting, use the separately frozen exporter design.
 
 ### Pose and visibility
 
 - [ ] Add a reference-pose loader exposing every tagged pose by animation index, including duplicate pose labels, after validating exactly one key per referenced sampler.
 - [ ] Keep generic skeleton vocabulary-role→node associations separate from optional VRM retarget adapters such as `viewer/src/createKHRCharacterVRMHumanoidRestPose.ts`.
 - [ ] Replace persistent `.visible` mutation with a per-view predicate implementing nearest hint metadata AND ancestor `KHR_node_visibility` AND primitive role, per node instance.
-- [ ] Suppress primitive draw participation rather than substituting transparent material.
+- [ ] Suppress primitive draw participation with per-draw filtering, isolated draw objects, scoped all-pass no-draw material/shader substitution, or another route that does not mutate authored state or contaminate other views; generic transparent material is insufficient.
 
 ### Tests/CI
 
@@ -537,7 +532,7 @@ Repository: [`Kjakubzak/UnityGLTF`](https://github.com/Kjakubzak/UnityGLTF)
 
 Create distinct responsibilities:
 
-- `ExpressionDriverPipeline`: normalization, selected mapping, clamp, immutable snapshot, masks.
+- `ExpressionDriverPipeline`: input validation, selected mapping, one final clamp, immutable snapshot, masks.
 - `ExpressionResponseEvaluator`: core interpolation and absolute pre-mix samples.
 - `ExpressionController`: Unity-specific Animator/additive/override integration.
 
@@ -547,17 +542,20 @@ Create distinct responsibilities:
 - [ ] Derive one duration from the original animation's channel-referenced sampler inputs before dropping unsupported optional targets; optional unsupported channels still affect `T`, truly unused samplers do not.
 - [ ] Store ordinary absolute samples.
 - [ ] Implement complete `CUBICSPLINE` interpolation.
-- [ ] Skip property writes at zero and remove prior expression influence on nonzero→zero transition.
-- [ ] Do not reset current Animator output to a stored neutral merely because the expression input is zero.
-- [ ] Normalize the selected input surface before mapping; final-clamp native values before the mask snapshot.
+- [ ] Make the wire evaluator stateless: zero input produces an empty response and a nonzero→zero transition carries no retained wire-space influence.
+- [ ] Give the Unity applicator explicit ownership modes: a standalone owner may restore its owned targets, while an integrated/post-Animator adapter must not overwrite live animation-system output merely because an expression input becomes zero.
+- [ ] Validate endpoint-command inputs in `[0,1]`; do not silently normalize them. Apply the mapping operation's single specified final clamp before the immutable mask snapshot.
 - [ ] Implement endpoint-command input only if the frozen schema contains a reverse mapping operation; otherwise preserve forward mapping for reporting/export and never invert it.
 - [ ] Stop implicitly combining direct and mapped values as wire behavior.
 - [ ] Address expression entries by authoritative array index, or enforce normative label uniqueness. Names remain diagnostic rather than silently merging driver slots.
-- [ ] Reject unsupported extensions listed in `extensionsRequired`; apply the selected optional classifier/filter fallback otherwise.
+- [ ] Treat typed children only as classifiers, never channel filters. Unsupported optional target extensions omit their response records but their referenced samplers still contribute to `T`; reject required extensions unless the implementation supplies their complete behavior.
 - [ ] Preserve unknown custom mask types and companion vendor-extension payloads separately from `Blend`; evaluate using the selected fallback and round-trip both.
+- [ ] Preserve root/item/classifier/mapping-contribution payloads and requiredness, including unknown child extensions and companion `extensionsUsed` / `extensionsRequired` declarations.
+- [ ] Validate initial-state equivalence and morph neutral precedence (`node.weights`, then `mesh.weights`, then zero) without using reference poses as expression neutral values.
+- [ ] Decode sparse accessors and validate sampler counts, decoded time ordering, matrix-backed TRS targets, classifier overlap, duplicate property targets, pointer-to-`extras` targets, and output cardinality before evaluation.
+- [ ] Represent texture scale, offset, rotation, and other supported material properties as independent response channels with their own samplers; let the Unity adapter fan a material response out to every material use it owns.
+- [ ] Preserve ordinary animation entries and make clip autoplay suppression an explicit host option rather than mutating wrap modes or detaching an Animator as conformance behavior.
 - [ ] Keep current additive/override logic as host-adapter policy and test it separately.
-
-If per-sampler phase is selected, retain only `tau=first+e*(last-first)`, typed-child filtering/unsupported-child behavior, and the selected one-key `LINEAR` synthesis, while producing absolute pre-mix samples. If fixed-target weighting is selected, replace the phase evaluator with the separately frozen design rather than adapting these rules.
 
 ### Reference pose
 
@@ -582,8 +580,8 @@ Primary areas:
 Tasks:
 
 - [ ] Expose a pure `(instance, primitive, context) -> bool` evaluator using nearest hint metadata AND ancestor `KHR_node_visibility` AND the primitive predicate.
-- [ ] Apply it transiently through per-camera render hooks or isolated draw objects.
-- [ ] Remove invisible-material substitution as the conformance path.
+- [ ] Apply it transiently through per-camera render hooks, isolated draw objects, scoped material/shader substitution, or another host route that produces the required visible set without mutating glTF-authored data or contaminating other views/instances.
+- [ ] Treat generic alpha-zero substitution as insufficient because it does not guarantee absence from color, depth, shadow, picking, or other visual passes; a no-draw material/shader adapter remains valid when it suppresses all applicable passes within an isolated scope.
 - [ ] Test Built-in and Universal Render Pipeline color, depth, shadows, two cameras in the same frame, shared meshes, and ancestor visibility without cross-contamination.
 
 ### Tests/CI
@@ -673,9 +671,8 @@ Tasks:
 
 - [ ] Parse capability and required-extension state.
 - [ ] Add an extension to `allowedExtensions` only after the implementation satisfies that extension's minimum support contract; reject unsupported required extensions rather than listing all 13 after parsing alone.
-- [ ] Under either phase model, add non-looping stateless sampling and do not reuse an interpolator that wraps full activation to the first key.
+- [ ] Add non-looping stateless global-phase sampling and do not reuse an interpolator that wraps full activation to the first key.
 - [ ] Under global phase, derive `T` from original channel-referenced sampler inputs before omitting unsupported optional outputs; optional unsupported channels still affect `T`, truly unused samplers do not.
-- [ ] Under per-sampler phase, implement the frozen `tau` formula, filtering/fallback, and one-key rules. Under fixed-target weighting, use its separate frozen evaluator.
 - [ ] Keep expression evaluation separate from ordinary autoplay.
 - [ ] Add per-view node/primitive draw filtering.
 - [ ] Add real evaluator unit tests and headless render tests.
