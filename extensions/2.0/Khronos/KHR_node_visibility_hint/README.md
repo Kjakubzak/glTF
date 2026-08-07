@@ -75,6 +75,17 @@ Let `hintVisible(n, C)` be the standard role predicate for the role of `resolved
 
 When `KHR_node_visibility` is present and supported, let `coreVisible(n)` be the logical AND of the current `KHR_node_visibility.visible` values on `n` and all its ancestors, using that extension's default of `true` where the property or extension is absent. Otherwise, `coreVisible(n)` is `true`. If `KHR_node_visibility` is separately listed in `extensionsRequired` and the consumer does not support it, the asset is unsupported under ordinary glTF extension rules.
 
+Because `coreVisible(n)` is a logical AND over a node and all its ancestors, an invisible node higher in the hierarchy always takes priority: a `visible: false` at any level hides that node and its entire subtree, and no `visible: true` on a descendant can restore it. The following cases summarize this interaction for an ancestor–descendant pair, independent of any hint role:
+
+| Ancestor `visible` | Descendant `visible` | Result |
+|--------------------|----------------------|--------|
+| `true`  | `false` | Descendant hidden. |
+| `false` | `true`  | Ancestor and descendant hidden. |
+| `false` | `false` | Ancestor and descendant hidden. |
+| `true`  | `true`  | Both visible, subject to the hint predicate. |
+
+This mirrors the normative semantics of `KHR_node_visibility`; it is restated here only to make the composition explicit and does not modify that extension.
+
 The visual-content predicate for `n` is:
 
 ```text

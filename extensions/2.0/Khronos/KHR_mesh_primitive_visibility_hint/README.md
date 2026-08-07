@@ -84,6 +84,17 @@ renderPrimitiveInstance(n, p, C) =
 
 A primitive hint cannot make a primitive visible when its containing node is hidden. Conversely, a visible containing node does not override a hidden primitive predicate.
 
+Because `coreVisible(n)` is a logical AND over the containing node and all its ancestors, an invisible node higher in the hierarchy always takes priority: a `visible: false` at any level hides that node and its entire subtree, and no `visible: true` lower down can restore it. The following cases summarize this interaction for a primitive instance whose containing node has an ancestor, independent of any hint role:
+
+| Ancestor `visible` | Containing node `visible` | Result |
+|--------------------|---------------------------|--------|
+| `true`  | `false` | Primitive instance hidden. |
+| `false` | `true`  | Ancestor, containing node, and primitive instance hidden. |
+| `false` | `false` | Ancestor, containing node, and primitive instance hidden. |
+| `true`  | `true`  | Primitive instance visible, subject to the node and primitive hint predicates. |
+
+This mirrors the normative semantics of `KHR_node_visibility`; it is restated here only to make the composition explicit and does not modify that extension.
+
 When interacting extensions are used, the asset MUST list each one in `extensionsUsed`. If correct presentation depends on their combined behavior, it MUST list each extension whose behavior is required in `extensionsRequired`.
 
 ## Per-view and per-instance evaluation
