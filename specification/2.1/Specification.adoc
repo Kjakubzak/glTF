@@ -873,7 +873,15 @@ Bounding volumes may be used to defer loading of content based on application-sp
 
 The tightness or looseness of the bounding volume may be customized by the asset author depending on the use case. For example, a bounding volume used for a skinned mesh is **RECOMMENDED** to be large enough to contain the mesh in all reasonable deformation states, such as the possible poses of a character. Similarly, a bounding volume placed on a parent with multiple animated children is **RECOMMENDED** to be large enough to contain all of the children in all reasonable animation states. Alternatively, such a parent could simply not define a bounding volume, and dynamically rely on the bounding volumes of its children, if any.
 
-Skinned mesh nodes with bounding volumes **SHOULD** be placed as children of the skeleton root node (if the skin defines a skeleton root node), or as a sibling of a root of its joint hierarchy. This allows the bounding volume to be transformed together with the skeletal hierarchy, such that root motion is applied to the bounding volume. This keeps the skinned mesh's bounding volume consistent with its skin-joint-node-determined visual representation.
+[NOTE]
+.Implementation Note
+====
+A bounding volume defined on a skinned mesh node is transformed by the mesh node's world transform (the composition of the node's local transform with all ancestor transforms), not by the skin's joint transforms. Because a skinned mesh node's own transform is ignored for the skinning computation, the mesh node's position in the scene hierarchy affects only the bounding volume, not the deformed geometry.
+
+If an ancestor node's animated transform displaces the character (for example, a translation animation targeting a joint or a navigation node), the skinned mesh node needs to be a descendant of that animated node for its bounding volume to track the displacement. A mesh node placed as a sibling of the displaced node will not inherit that displacement, and the bounding volume will remain stationary while the deformed mesh moves away from it. Displacement animated on the root joint — sometimes called "root motion" — therefore reaches the bounding volume only when the volume is defined on the displaced node itself or on one of its descendants. See <<joint-hierarchy,Joint Hierarchy>>.
+
+Node placement determines the bounding volume's world transform (translation, rotation, and scale inherited from ancestors); it does not account for skinned deformation. Bounding volumes are not skeleton-aware: a volume follows joint motion only through the transforms inherited from its node's ancestors. Per-frame tracking of skinned deformation (for example, recomputing bounds from posed joint transforms) requires runtime handling not defined by this specification. Skinned deformation may cause vertices to exceed any statically-defined volume regardless of the mesh node's placement.
+====
 
 `"box"`` and `"sphere"` are the supported shape types for bounding volumes due to their simplicity and efficiency. Additional shape types **MAY** be allowed via extensions.
 
@@ -1558,7 +1566,7 @@ glTF 2.1 meshes support Linear Blend Skinning via skin objects, joint hierarchie
 
 Skins are stored in the `skins` array of the asset. Each skin is defined by a **REQUIRED** `joints` property that lists the indices of nodes used as joints to pose the skin and an **OPTIONAL** `inverseBindMatrices` property that points to an accessor with inverse bind matrices data used to bring coordinates being skinned into the same space as each joint.
 
-The order of joints is defined by the `skin.joints` array and it **MUST** match the order of `inverseBindMatrices` accessor elements (when the latter is present). The `skeleton` property (if present) points to the node that is the common root of a joints hierarchy or to a direct or indirect parent node of the common root.
+The order of joints is defined by the `skin.joints` array and it **MUST** match the order of `inverseBindMatrices` accessor elements (when the latter is present). The `skeleton` property (if present) identifies the skeleton root of the skin: the common root of the skin's joints hierarchy or an ancestor thereof. The skeleton root **SHOULD** be defined. When defined, it **SHOULD** be an ancestor of every node whose `skin` property references this skin, it **SHOULD** be the lowest common ancestor of the skin's joints and the nodes that reference the skin, and it **MAY** itself be a joint node.
 
 [NOTE]
 .Implementation Note
@@ -1594,6 +1602,8 @@ It's common to have an entire geometry attached to a joint node without having i
 ====
 
 Only the joint transforms are applied to the skinned mesh; the transform of the skinned mesh node **MUST** be ignored.
+
+Skinned mesh nodes **SHOULD** be placed as descendants of a common animated ancestor of the skin's joints: typically a child of the skeleton root identified by `skin.skeleton` or, when `skeleton` is not defined, a child of the _common root_. Such placement allows translations and rotations animated on ancestor nodes of the joint hierarchy to be inherited by the mesh node. Skins that declare the same `skeleton` belong to the same skeleton. Within a skeleton, skins **MAY** declare disjoint, overlapping, or identical `joints` arrays, and each skin's `JOINTS_n` attributes are indexed by that skin's own `joints` array.
 
 In the example below, the translation of `node_0` and the scale of `node_1` are applied while the translation of `node_3` and rotation of `node_4` are ignored.
 
